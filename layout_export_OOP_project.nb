@@ -1,0 +1,193 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[      7482,        185]
+NotebookOptionsPosition[      5596,        148]
+NotebookOutlinePosition[      6003,        164]
+CellTagsIndexPosition[      5960,        161]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.957080167526148*^9, 3.9570803399675045`*^9}, {
+   3.9570803729679737`*^9, 3.9570804147669106`*^9}, {3.957081041950865*^9, 
+   3.957081052298046*^9}, {3.957081205202717*^9, 3.9570812355263233`*^9}, {
+   3.957081416919882*^9, 3.957081418237234*^9}, 3.957081637053913*^9},
+ CellLabel->"",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"SetDirectory", "[", 
+   RowBox[{"NotebookDirectory", "[", "]"}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.957081643218851*^9, 3.9570816502247047`*^9}, 
+   3.957082010915392*^9, 3.957082077394266*^9, {3.95708218807218*^9, 
+   3.9570822549241505`*^9}, {3.9570823476089573`*^9, 
+   3.9570823478664837`*^9}},ExpressionUUID->"a214746c-703e-f84a-b3a2-\
+c7e512e5860a"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"FileNames", "[", 
+  RowBox[{"\"\<*\>\"", ",", "Directory"}], "]"}]], "Input",
+ CellChangeTimes->{{3.957082354014969*^9, 3.957082371476856*^9}},
+ NumberMarks->False,ExpressionUUID->"aabe6254-4f21-6349-8151-ea8529bdd48a"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\CppClassLayoutParser.wl\"\>", 
+   ",", "\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\layout_export_OOP_project.nb\"\>",
+    ",", "\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\previos_exam_examples\"\>"}], 
+  "}"}]], "Output",
+ CellChangeTimes->{{3.9570823432181206`*^9, 3.9570823502910137`*^9}},
+ CellLabel->"Out[60]=",ExpressionUUID->"da0f115a-4c68-8441-8d14-7dcb8aa7b353"]
+}, Open  ]],
+
+Cell[BoxData["|"], "Input",
+ CellChangeTimes->{
+  3.9570823503068123`*^9},ExpressionUUID->"9ce5269f-1f9c-4847-bd2a-\
+54f151c6a876"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"FileNames", "[", 
+  RowBox[{"\"\<*\>\"", 
+   ",", "\"\<C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\>\""}], "]"}]], "Input",
+ NumberMarks->False,
+ CellLabel->"In[56]:=",ExpressionUUID->"b2e723fc-6577-1f4f-9518-c9521002a7a1"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\CppClassLayoutParser . \
+wl.wls\"\>", 
+   ",", "\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\layout_export_OOP_project.nb\"\>",
+    ",", "\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\\\\previos_exam_examples\"\>"}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.957082286151024*^9},
+ CellLabel->"Out[56]=",ExpressionUUID->"9c7c9f7a-f35d-df4e-8732-aa2bebf7d6a8"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"ParentDirectory", 
+  "[", "\"\<C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\\\
+advanced_software_engineering\\\\project\>\"", "]"}]], "Input",
+ NumberMarks->False,
+ CellLabel->"In[53]:=",ExpressionUUID->"12aa68b4-7259-f84c-9317-eb2d2071b63b"],
+
+Cell[BoxData["\<\"C:\\\\Users\\\\sleem\\\\Desktop\\\\Technion\\\\semester_8\\\
+\\advanced_software_engineering\"\>"], "Output",
+ CellChangeTimes->{3.9570822672623463`*^9},
+ CellLabel->"Out[53]=",ExpressionUUID->"e25337c1-26af-1d4e-95a2-33a50ce39276"]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",ExpressionUUID->"f425db16-fcae-1b4c-9632-a762d3618004"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{3.957082061104513*^9},
+ NumberMarks->False,ExpressionUUID->"53058381-a1d0-2243-ac0f-9cfd81f63e2a"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"\[IndentingNewLine]", "\n"}]], "Input",
+ CellChangeTimes->{{3.957080591488058*^9, 3.957080643493353*^9}, {
+   3.95708143705035*^9, 3.957081466737213*^9}, {3.9570818581088696`*^9, 
+   3.957081870695263*^9}, 
+   3.9570820715533752`*^9},ExpressionUUID->"4d216195-8f2e-ff4b-815c-\
+32c82df722c5"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "Get", "noopen", 
+   "\"Cannot open \
+\\!\\(\\*RowBox[{\\\"\\\\\\\"CppClassLayoutParser.wl\\\\\\\"\\\"}]\\).\"", 2, 
+   43, 21, 32026676325780155620, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9570814696383915`*^9, 3.957081747435032*^9, 
+  3.957081872267828*^9, 3.95708201635627*^9, 3.957082047314644*^9},
+ CellLabel->
+  "During evaluation of \
+In[43]:=",ExpressionUUID->"ffef48a3-7cbd-5648-990b-a005a5f4bcd0"],
+
+Cell[BoxData["$Failed"], "Output",
+ CellChangeTimes->{3.9570818722698383`*^9, 3.9570820163645363`*^9, 
+  3.957082047314644*^9},
+ CellLabel->"Out[43]=",ExpressionUUID->"f4082535-7f0e-a447-a46e-c5a38e1ca68c"]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.957081853546713*^9, 
+  3.9570818535500813`*^9}},ExpressionUUID->"dfe8bd72-faed-1941-8eb0-\
+a75548bef5da"],
+
+Cell[BoxData[""], "Code",
+ CellChangeTimes->{{3.957081755706814*^9, 3.9570817558178844`*^9}, 
+   3.9570818559638424`*^9},ExpressionUUID->"a206d7c6-50cf-fb40-a21b-\
+ccf84b3c5519"]
+},
+WindowSize->{1280, 652},
+WindowMargins->{{-5.5, Automatic}, {Automatic, -5.5}},
+FrontEndVersion->"14.2 for Microsoft Windows (64-bit) (December 26, 2024)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"cc017dbd-3c5a-d04f-af11-30a47627553b"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 389, 5, 28, "Input",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
+Cell[946, 27, 401, 8, 28, "Input",ExpressionUUID->"a214746c-703e-f84a-b3a2-c7e512e5860a"],
+Cell[CellGroupData[{
+Cell[1372, 39, 243, 4, 28, "Input",ExpressionUUID->"aabe6254-4f21-6349-8151-ea8529bdd48a"],
+Cell[1618, 45, 657, 10, 70, "Output",ExpressionUUID->"da0f115a-4c68-8441-8d14-7dcb8aa7b353"]
+}, Open  ]],
+Cell[2290, 58, 131, 3, 28, "Input",ExpressionUUID->"9ce5269f-1f9c-4847-bd2a-54f151c6a876"],
+Cell[CellGroupData[{
+Cell[2446, 65, 307, 6, 28, "Input",ExpressionUUID->"b2e723fc-6577-1f4f-9518-c9521002a7a1"],
+Cell[2756, 73, 637, 11, 70, "Output",ExpressionUUID->"9c7c9f7a-f35d-df4e-8732-aa2bebf7d6a8"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3430, 89, 281, 5, 28, "Input",ExpressionUUID->"12aa68b4-7259-f84c-9317-eb2d2071b63b"],
+Cell[3714, 96, 250, 3, 32, "Output",ExpressionUUID->"e25337c1-26af-1d4e-95a2-33a50ce39276"]
+}, Open  ]],
+Cell[3979, 102, 81, 0, 28, "Input",ExpressionUUID->"f425db16-fcae-1b4c-9632-a762d3618004"],
+Cell[4063, 104, 144, 2, 28, "Input",ExpressionUUID->"53058381-a1d0-2243-ac0f-9cfd81f63e2a"],
+Cell[CellGroupData[{
+Cell[4232, 110, 315, 6, 66, "Input",ExpressionUUID->"4d216195-8f2e-ff4b-815c-32c82df722c5"],
+Cell[4550, 118, 483, 12, 26, "Message",ExpressionUUID->"ffef48a3-7cbd-5648-990b-a005a5f4bcd0"],
+Cell[5036, 132, 206, 3, 32, "Output",ExpressionUUID->"f4082535-7f0e-a447-a46e-c5a38e1ca68c"]
+}, Open  ]],
+Cell[5257, 138, 154, 3, 28, "Input",ExpressionUUID->"dfe8bd72-faed-1941-8eb0-a75548bef5da"],
+Cell[5414, 143, 178, 3, 50, "Code",ExpressionUUID->"a206d7c6-50cf-fb40-a21b-ccf84b3c5519"]
+}
+]
+*)
+
