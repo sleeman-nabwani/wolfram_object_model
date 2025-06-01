@@ -57,7 +57,7 @@ struct Y2 : virtual X {
 struct Z : Y1, Y2 {
     Z() {
         cout << "Z()";
-        f();
+        f();    
     }
     virtual void f() {
         cout << "Z::f()";
