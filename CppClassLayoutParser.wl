@@ -1,368 +1,485 @@
 (* ::Package:: *)
 
-(*CppClassLayoutParser.wl A Wolfram Language application to: 
-  1. Parse C++ class headers via Clang JSON AST 
-  2. Compute object-layout subobjects (including virtual bases) 
-  3. Render box diagrams showing subobject offsets 
-Usage:
-  1. Save this file (CppClassLayoutParser.wl) to a directory on your system.
-  2. In the Wolfram Desktop or Cloud,open a new Notebook.
-  3. Load the definitions by evaluating:<<"path/to/CppClassLayoutParser.wl" 
-  4. Point to your C++ header,e.g.:classes.hpp 
-  5. Run:classes=ParseCppToClasses["classes.hpp"];
-		   layout=ComputeLayout[classes];
-           DrawLayout[layout];
-You can customize:-Compiler flags in ParseCppToClasses by editing the RunProcess call.
--Unit sizes or offsets in ComputeLayout if you want real byte sizes.
--Diagram styling in DrawLayout (e.g.colors,labels).*)
-(*Public functions:ParseCppToClasses,ComputeLayout,DrawLayout*)
+(*
+   CppClassLayoutParser.wl
 
+   Provides:
 
-(* ::Package:: *)
-(**)
+     \[Bullet] ParseCppToClasses[path_String]    \[Dash] uses clang to dump a JSON AST, then
+                                         builds an Association:
+       <|
+         "ClassName1" -> <|
+             "AST"    -> <\[Ellipsis]raw AST node\[Ellipsis]>,
+             "Bases"  -> { {"BaseA", False}, {"BaseB", True}, \[Ellipsis] },
+             "Fields" -> { {"field1", "int"}, {"field2", "double"}, \[Ellipsis] }
+           |>,
+         "ClassName2" -> <| \[Ellipsis] |>,
+         \[Ellipsis]
+       |>
 
+     \[Bullet] ComputeClassLayout[classes_Association, className_String]  
+         \[Dash] walks that Association recursively and returns
+       <|
+         "Subobjects" -> { <|"Name"->\[Ellipsis],"Kind"->\[Ellipsis],"Offset"->\[Ellipsis],"Size"->\[Ellipsis],
+                             (* optional keys: "ClassOfVtable", "IsVirtualBase" *) |>, \[Ellipsis] },
+         "TotalSize"  -> totalBytes,
+         "MaxAlign"   -> maxAlignment
+       |>
 
-BeginPackage["CppClassLayoutParser`"]
+     \[Bullet] DrawClassLayout[layout_Association]  
+         \[Dash] turns the output of ComputeClassLayout[\[Ellipsis]] into a single Graphics
+           showing each subobject\[CloseCurlyQuote]s rectangle, little \[OpenCurlyDoubleQuote]vptr\[CloseCurlyDoubleQuote]/\[OpenCurlyDoubleQuote]vbase\[CloseCurlyDoubleQuote] slots
+           in red, and a tick\[Hyphen]mark ruler below.
 
-(*  \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] Public symbols go here \[Dash] just the names \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]  *)
-ParseCppToClasses::usage = 
-  "ParseCppToClasses[file] returns an Association of classes.";
-ComputeLayout::usage     = 
-  "ComputeLayout[classes, name] gives <|\"Layout\"\[RightArrow]\[Ellipsis], \"TotalSize\"\[RightArrow]\[Ellipsis]|>.";
-DrawLayout::usage        = 
-  "DrawLayout[list] draws a box diagram.";
-ParseAndDrawLayout::usage =
-  "Interactive helper that combines the three steps.";
+     \[Bullet] ParseAndDrawClassLayout[ ] and ParseAndDrawClassLayout[path_String, className_String]
+         \[Dash] interactive helpers for picking a file, a class, then invoking
+           ComputeClassLayout<>DrawClassLayout.
 
-(*  \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] Error messages \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]  *)
-ParseCppToClasses::noFile = "File `1` not found.";
-ParseCppToClasses::badAST = "clang could not produce a JSON AST for `1`.";
-ComputeLayout::noClass    = "Class `1` not in the parsed association.";
+   To use: put this file somewhere (e.g. \[OpenCurlyDoubleQuote]CppClassLayoutParser.wl\[CloseCurlyDoubleQuote]), then in
+   Mathematica evaluate
+
+     << "path/to/CppClassLayoutParser.wl";
+
+   and call e.g.
+
+     clsAssoc = ParseCppToClasses["MyHeader.hpp"];
+     layoutX = ComputeClassLayout[clsAssoc, "X"];
+     DrawClassLayout[layoutX];
+
+   etc.
+*)
+
+BeginPackage["CppClassLayoutParser`"];
+
+ParseCppToClasses::usage =
+  "ParseCppToClasses[path_String] parses the given C++ header via clang's \
+AST dump (JSON) and returns an Association of the form \
+  <| \
+    \"ClassA\" -> <| \
+        \"AST\"    -> <\[Ellipsis]raw AST node\[Ellipsis]>, \
+        \"Bases\"  -> { {\"Base1\", False}, {\"Base2\", True}, \[Ellipsis] }, \
+        \"Fields\" -> { {\"fld1\", \"int\"}, {\"fld2\", \"double\"}, \[Ellipsis] } \
+      |>, \
+    \"Base1\" -> <| \[Ellipsis] |>, \
+    \[Ellipsis] \
+  |> \
+Each class entry lists its immediate bases (name, isVirtual) and its data \
+fields (fieldName, typeString)."
+
+ComputeClassLayout::usage =
+  "ComputeClassLayout[classes_Association, className_String] \
+recursively computes the in-memory layout of className (including all \
+non-virtual and virtual bases, vptr slots, vbase slots, and ordinary fields). \
+Returns an Association: \
+  <| \
+    \"Subobjects\" -> { subobj1, subobj2, \[Ellipsis] }, \
+    \"TotalSize\"  -> totalSizeInBytes, \
+    \"MaxAlign\"   -> maxAlignment \
+  |> \
+where each subobj is an Association: \
+  <| \
+    \"Name\"         -> \"X\",       (* class or field name *) \
+    \"Kind\"         -> \"NonVirtualBase\" or \"VirtualBase\" or \"Vptr\" or \
+                       \"VbaseSlot\" or \"Field\", \
+    \"Offset\"       -> offsetInBytes, \
+    \"Size\"         -> sizeInBytes, \
+    (* optional: if Kind->\"Vptr\", then \"ClassOfVtable\"->className *) \
+    (* optional: if Kind->\"VirtualBase\", then \"IsVirtualBase\"->True *) \
+  |>."
+
+DrawClassLayout::usage =
+  "DrawClassLayout[layout_Association] takes the output of \
+ComputeClassLayout and draws a schematic rectangle for each subobject in \
+the order they occupy memory, labeling each with its Name/Kind, small red \
+\"vptr\" and \"vbase\" boxes at the left edge of each class subobject, \
+and a byte-offset ruler along the bottom. Clicking on a \"vptr\" pops up \
+a tooltip showing which class\[CloseCurlyQuote]s vtable lives there."
+
+ParseAndDrawClassLayout::usage =
+  "ParseAndDrawClassLayout[] opens a file-picker, lets you choose a C++ \
+header, picks a class by name, and draws the layout. \
+ParseAndDrawClassLayout[path_String, className_String] does the same \
+programmatically."
 
 Begin["`Private`"];
 
-(* ---------------------------------------------------------------------------- *)
-(* ParseCppToClasses                                                        *)
-(* ---------------------------------------------------------------------------- *)
-ParseCppToClasses[file_String] := Module[{out, json, nodes, classes},
-  If[!StringQ[file] || !FileExistsQ[file],
-    Message[ParseCppToClasses::noFile, file]; Return[$Failed]
+
+(* 1) typeSize / typeAlign helpers *)
+typeSize["char"]   := 1;
+typeSize["int"]    := 4;
+typeSize["double"] := 8;
+typeSize[_]        := 8;   (* default for any unknown type *)
+typeAlign[t_]      := typeSize[t];
+
+
+(* 2) ParseCppToClasses: run clang, get JSON, extract CXXRecordDecls *)
+ParseCppToClasses[file_String] := Module[
+  {out, json, nodes, classes},
+  If[ !StringQ[file] || !FileExistsQ[file],
+    Message[ParseCppToClasses::noFile, file]; 
+    Return[$Failed]
   ];
   out = RunProcess[
-    {"clang", "-x", "c++", "-std=c++17", "-fsyntax-only", "-fno-color-diagnostics",
-     "-Xclang", "-ast-dump=json", file}, "StandardOutput"];
-  If[!StringQ[out] || StringTrim[out] === "",
-    Message[ParseCppToClasses::badAST, file]; Return[$Failed]
+    {
+      "clang", "-x", "c++", "-std=c++17", "-fsyntax-only", 
+      "-fno-color-diagnostics", "-Xclang", "-ast-dump=json", file
+    },
+    "StandardOutput"
   ];
-  json = Quiet @ Check[ ImportString[out, "RawJSON"], $Failed ];
-  If[!AssociationQ[json],
-    Message[ParseCppToClasses::badAST, file]; Return[$Failed]
+  If[ !StringQ[out] || StringTrim[out] === "",
+    Message[ParseCppToClasses::badAST, file]; 
+    Return[$Failed]
   ];
-  nodes = Lookup[json, "inner", {}];
-  classes = Association @ Reap[
-    Scan[Function[node,
-      If[
-        MatchQ[node, _Association] && node["kind"] === "CXXRecordDecl" &&
-        KeyExistsQ[node, "name"] && !Lookup[node, "isImplicit", False],
-         (* Print the raw `loc` field so we see exactly what path Clang gave us *)
-      Print["Class \[OpenCurlyDoubleQuote]", node["name"], "\[CloseCurlyDoubleQuote] location: ", Lookup[node, "loc", {}] ];
-      if[  
-        With[{loc = Lookup[node, "loc", <||>]},
-		  StringMatchQ[
-		    Lookup[loc, "file", ""],
-		    "*" <> FileNameTake[file]
-		  ]
-		],
-        Sow[node["name"] -> <|
-          "AST"    -> node,
-		  "Bases" -> Map[
-		      {
-		        Lookup[#1, "type", <|"qualType"->""|>]["qualType"],
-		        Lookup[#1, "isVirtual", False]
-		      } &,
-		      Lookup[node, "bases", {}]
-		  ],
-          "Fields" -> Map[{#1["name"], #1["type"]["qualType"]} &, 
-                            Select[Lookup[node, "inner", {}], #1["kind"] === "FieldDecl" &]]
-        |>]
-        ]
-      ]
-    ], 
-    nodes
-    ];
+  json = Quiet@Check[ ImportString[out, "RawJSON"], $Failed ];
+  If[ !AssociationQ[json],
+    Message[ParseCppToClasses::badAST, file]; 
+    Return[$Failed]
+  ];
+  nodes = Cases[
+	  json,
+	  assoc_Association /; assoc["kind"] === "CXXRecordDecl",
+	  Infinity
+  ];
+  classes = Association@Reap[
+    Scan[
+      Function[node,
+	        If[
+		      MatchQ[node, _Association] &&
+		      node["kind"] === "CXXRecordDecl" &&
+		      KeyExistsQ[node, "name"] &&
+		      (* 1) skip purely implicit records: *)
+		      !Lookup[node, "isImplicit", False] &&
+		      (* 2) skip anything with no real \[OpenCurlyDoubleQuote]loc\[CloseCurlyDoubleQuote] info: *)
+		      KeyExistsQ[node, "loc"] && node["loc"] =!= <||> &&
+		      (* 3) only full definitions, not forward\[Hyphen]decls: *)
+		      Lookup[node, "completeDefinition", False],
+		      
+		      Print["Class \"", node["name"], "\" location: ", Lookup[node, "loc", <||>]];
+		      Sow[
+		        node["name"] -> <|
+		          "AST"    -> node,
+		          "Bases"  -> Map[{Lookup[#1, "type", <|"qualType"->""|>]["qualType"],
+		                           Lookup[#1, "isVirtual", False]} &,
+		                         Lookup[node, "bases", {}]],
+		          "Fields" -> Map[{#1["name"], #1["type"]["qualType"]} &,
+		                          Select[Lookup[node, "inner", {}],
+		                                 (#1["kind"] === "FieldDecl") &]]
+		     |>
+		   ]
+	    ];
+      ],
+      nodes
+    ]
   ][[2]];
+  Print["\[RightArrow] FINAL classes keys: ",Keys[classes]];
   classes
 ];
 
-(* ---------------------------------------------------------------------------- *)
-(* ComputeLayout                                                             *)
-(* ---------------------------------------------------------------------------- *)
-ComputeLayout[classes_Association, className_String] := Module[{
-    cls, nonV, virtV, layout = {}, offs = 0, maxAlign = 1,
-    typeSize, typeAlign, addEntry, totalSize
+
+(* 3) ComputeClassLayout: recursively assemble subobjects *)
+ComputeClassLayout[classes_Association, className_String] := Module[
+  {
+    cls, nonV, virtV, subobjs = {}, offs = 0, maxAlign = 1,
+    appendSubobj, totalSize, rec, hasPolymorphicBaseQ
   },
-  typeSize["char"]   := 1; typeSize["int"] := 4; typeSize["double"] := 8; typeSize[_] := 8;
-  typeAlign[t_] := typeSize[t];
-  addEntry[name_, kind_, sz_, al_] := (
-    offs = Ceiling[offs/al]*al;
-    AppendTo[layout, <|
+  
+  Print["\[HorizontalLine]\[HorizontalLine]\[FilledRightTriangle] Enter ComputeClassLayout for: ", className];
+
+
+  If[ !KeyExistsQ[classes, className],
+    Message[ComputeClassLayout::noClass, className];
+    Return[$Failed]
+  ];
+  cls = classes[className];
+
+  (* Partition bases *)
+  nonV  = Select[ cls["Bases"], Not[#[[2]]] & ];
+  virtV = Select[ cls["Bases"], #[[2]] & ];
+  
+  Print["    non-virtual bases =", nonV, "; virtual bases =", virtV];
+
+  rec = ComputeClassLayout;  (* recursive reference *)
+
+  appendSubobj[name_, kind_, sz_, al_, opts___] := Module[
+    {alignedOffs, entry},
+    alignedOffs = Ceiling[offs/al]*al;
+    offs = alignedOffs;
+    entry = <|
       "Name"   -> name,
       "Kind"   -> kind,
       "Offset" -> offs,
       "Size"   -> sz
-    |>];
-    offs += sz; maxAlign = Max[maxAlign, al];
-  );
-  If[!KeyExistsQ[classes, className],
-    Message[ComputeLayout::noClass, className]; Return[$Failed]
+    |>;
+    (* merge extra options if any *)
+    Do[
+       entry[k] = v,
+       {{k, v}, {opts}}
+    ];
+    AppendTo[subobjs, entry];
+    offs += sz;
+    maxAlign = Max[maxAlign, al];
   ];
-  cls = classes[className];
-  nonV   = Select[cls["Bases"], Not[#[[2]]] &];
-  virtV  = Select[cls["Bases"], #[[2]] &];
-  Scan[Function[b, addEntry[b[[1]], "NonVirtualBase",
-    ComputeLayout[classes, b[[1]]]["TotalSize"],
-    ComputeLayout[classes, b[[1]]]["TotalSize"]]], nonV];
-  Scan[Function[b, addEntry[b[[1]], "VirtualBase",
-    ComputeLayout[classes, b[[1]]]["TotalSize"],
-    ComputeLayout[classes, b[[1]]]["TotalSize"]]], virtV];
-  addEntry["vptr", "Vptr", 8, 8];
-  Scan[Function[b, addEntry["vbase:"<>b[[1]], "VbaseSlot", 8, 8]], virtV];
-  Scan[Function[f, addEntry[f[[1]], "Field", typeSize[f[[2]]], typeAlign[f[[2]]]]],
-       cls["Fields"]];
-  totalSize = Ceiling[offs/maxAlign]*maxAlign;
-  <|"Layout"->layout, "TotalSize"->totalSize|>
-];
 
-(* ---------------------------------------------------------------------------- *)
-(* DrawLayout                                                                 *)
-(* ---------------------------------------------------------------------------- *)
-ClearAll[DrawClassLayoutByKind];
-
-(*
-   DrawClassLayoutByKind takes a _raw_ layout list where each element is
-   an association of the form:
-     <|"Offset"->startByte, "Size"->classSize, "Name"->className, "Kind"->"class"|>
-   It will then automatically split each class\[Hyphen]sized block into three pieces:
-     1) a vptr slot  (pointer\[Hyphen]sized)   \[RightArrow] row "vptr"
-     2) a vbase slot (pointer\[Hyphen]sized)\:2003  \[RightArrow] row "vbase"
-     3) the remaining bytes            \[RightArrow] row "class"
-   and then draw all of them in a three\[Hyphen]row horizontal bar chart.
-
-   The only option you need to worry about is PointerSize (in bytes).
-*)
-Options[DrawClassLayoutByKind] = {PointerSize :> ($MachineWordLength/8)};
-
-DrawClassLayoutByKind[
-  rawLayout_List,
-  OptionsPattern[]
-] := Module[
-  {
-    ps,             (* pointer size in bytes *)
-    expanded,       (* the \[OpenCurlyDoubleQuote]expanded\[CloseCurlyDoubleQuote] list after inserting vptr+vbase slots *)
-    maxX,           (* farthest\[Hyphen]right X to set PlotRange *)
-    yOfKind,        (* map from row\[Hyphen]name to Y\[Hyphen]coordinate *)
-    allOffsets,     (* list of all offsets to put tick marks *)
-    xTicks,         (* formatted tick list *)
-    rects, texts,   (* the graphics primitives to draw *)
-    yMin, yMax
-  },
-
-  (* 1) Determine how many bytes a pointer occupies on this machine. *)
-  ps = OptionValue[PointerSize];
-
-  (*
-    2) We expect rawLayout to have exactly one association per \[OpenCurlyDoubleQuote]class\[CloseCurlyDoubleQuote]:
-         <|"Offset" -> offsetOfClass, "Size" -> sizeOfClass, 
-           "Name" -> className, "Kind" -> "class"|>
-    We will break that \[OpenCurlyDoubleQuote]class\[CloseCurlyDoubleQuote]\[Hyphen]sized block into three sub\[Hyphen]blocks:
-      \[Bullet] vptr  = the first ps bytes
-      \[Bullet] vbase = the next ps bytes
-      \[Bullet] class = the remaining (sizeOfClass \[Minus] 2 ps) bytes
-    If the incoming \[OpenCurlyDoubleQuote]class\[CloseCurlyDoubleQuote] is smaller than 2 ps, it will still draw something,
-    but typically you want all classes \[GreaterEqual] 2 ps in size.
-  *)
-  expanded = rawLayout // Flatten[{
-    (* For each \[OpenCurlyDoubleQuote]class\[CloseCurlyDoubleQuote] entry, produce three pieces in one combined list *)
-    Function[assoc,
-      Module[{off, len, nm, remainder},
-        off = assoc["Offset"];
-        len = assoc["Size"];
-        nm = assoc["Name"];
-        remainder = len - 2 ps;
-
-        {
-          (* 2a) vptr block *)
-          <|
-            "Offset" -> off,
-            "Size"   -> ps,
-            "Name"   -> nm <> "\[CenterDot]vptr",
-            "Kind"   -> "vptr"
-          |>,
-
-          (* 2b) vbase block *)
-          <|
-            "Offset" -> off + ps,
-            "Size"   -> ps,
-            "Name"   -> nm <> "\[CenterDot]vbase",
-            "Kind"   -> "vbase"
-          |>,
-
-          (* 2c) class block (the \[OpenCurlyDoubleQuote]rest\[CloseCurlyDoubleQuote] of the object) *)
-          <|
-            "Offset" -> off + 2 ps,
-            "Size"   -> Max[0, remainder],  (* guard against negative *)
-            "Name"   -> nm,
-            "Kind"   -> "class"
-          |>
-        }
+ (* 1st pass: non-virtual bases *)
+  Scan[
+    
+    Function[{basePair},
+    Print["    Processing non-virtual base: ", basePair[[1]]];
+      Module[{bname, isVirt, sublayout},
+        bname   = basePair[[1]];
+        isVirt  = basePair[[2]];  (* currently always False in nonV *)
+        sublayout = rec[classes, bname];
+        appendSubobj[bname, NonVirtualBase,
+                     sublayout["Size"],   
+                     sublayout["Align"]
+                     ];
       ]
     ],
-    (* in principle, if rawLayout already contained vptr/vbase/class entries you
-       could skip\[LongDash]but here we assume \[OpenCurlyDoubleQuote]rawLayout\[CloseCurlyDoubleQuote] is just a list of pure-"class" blocks. *)
-    rawLayout
-  }];
+    nonV
+  ];
+  (* 2nd pass: virtual bases (place at end of \[OpenCurlyDoubleQuote]base area\[CloseCurlyDoubleQuote]) *)
+    Scan[
+    Function[{basePair},
+      Module[{bname, isVirt, sublayout},
+        bname   = basePair[[1]];
+        isVirt  = basePair[[2]];  (* currently always False in nonV *)
+        sublayout = rec[classes, bname];
+        appendSubobj[bname, NonVirtualBase,
+                     "VirtualBase",
+                     sublayout["Size"],   
+                     sublayout["Align"],
+                     "IsVirtualBase" -> True
+                     ];
+      ];
+      Print["    \[RightArrow] Layout of base ", basePair[[1]], " was: ", rec[classes, basePair[[1]]]];
+    ],
+    nonV
+  ];
+ 
+  (* Determine \[OpenCurlyDoubleQuote]polymorphic\[CloseCurlyDoubleQuote] status: if there is any virtual base, we place a vptr *)
+  hasPolymorphicBaseQ = Lookup[ cls["AST"], "isPolymorphic", False ];
 
-  (*
-    3) After expansion, we have a list of small chunks, each with a \[OpenCurlyDoubleQuote]Kind\[CloseCurlyDoubleQuote] of
-       "vptr", "vbase", or "class".  We now choose which vertical row they sit on.
-    Row assignment:
-      \[OpenCurlyDoubleQuote]vptr\[CloseCurlyDoubleQuote]  \[RightArrow] row 1
-      \[OpenCurlyDoubleQuote]vbase\[CloseCurlyDoubleQuote] \[RightArrow] row 2
-      \[OpenCurlyDoubleQuote]class\[CloseCurlyDoubleQuote] \[RightArrow] row 3
-  *)
-  yOfKind = <|"vptr" -> 1, "vbase" -> 2, "class" -> 3|>;
-
-  (*
-    4) Among all expanded pieces, find the farthest\[Hyphen]right byte:
-       This allows us to set PlotRange\[RightArrow]{{0,maxX},{\[Ellipsis]}}.
-  *)
-  maxX = Max[(#["Offset"] + #["Size"]) & /@ expanded];
-
-  (*
-    5a) Build a Rectangle primitive for each small chunk:
-         Rectangle[{x0, y\[Minus]0.4}, {x1, y+0.4}]
-       so that each row is 0.8 \[OpenCurlyDoubleQuote]high\[CloseCurlyDoubleQuote] total, centered at y = 1,2, or 3.
-  *)
-  rects = expanded // Map[
-    Function[assoc,
-      Module[{x0, w, y},
-        x0 = assoc["Offset"];
-        w  = assoc["Size"];
-        y  = yOfKind[assoc["Kind"]];
-        Rectangle[{x0,       y - 0.4},
-                  {x0 + w,   y + 0.4}]
-      ]
-    ]
+  If[ hasPolymorphicBaseQ,
+    appendSubobj["vptr", "Vptr", 8, 8, "ClassOfVtable" -> className];
   ];
 
-  (*
-    5b) Build a Text primitive in the center of each rectangle
-         That label shows \[OpenCurlyDoubleQuote]Name (Size)\[CloseCurlyDoubleQuote].
-  *)
-  texts = expanded // Map[
-    Function[assoc,
-      Module[{x0, w, y, nm, sz},
-        x0 = assoc["Offset"];
-        w  = assoc["Size"];
-        y  = yOfKind[assoc["Kind"]];
-        nm = assoc["Name"];
-        sz = assoc["Size"];
-        Text[
-          nm <> "\n(" <> ToString[sz] <> ")",
-          {x0 + w/2, y},
-          {0, 0}
-        ]
-      ]
-    ]
+  (* For each immediate virtual base, allocate an 8-byte vbase slot *)
+  Scan[
+    Function[{bname, isVirt},
+      appendSubobj[
+        "vbase:"<>bname,
+        "VbaseSlot",
+        8,
+        8
+      ];
+    ],
+    virtV
   ];
 
-  (*
-    6) Collect all distinct \[OpenCurlyDoubleQuote]Offset\[CloseCurlyDoubleQuote] values so we can tick them on the X axis.
-       We only tick on the X axis; no Y\[Hyphen]tick labels are needed.
-  *)
-  allOffsets = Sort@DeleteDuplicates[expanded[[All, "Offset"]]];
-  xTicks     = ( # -> ToString[#] ) & /@ allOffsets;
+  (* Lay out this class\[CloseCurlyQuote]s own data fields in declaration order *)
+	Scan[
+	  Function[{pair},
+	    Module[{fname = pair[[1]], ftype = pair[[2]], sz, al},
+	      sz = typeSize[ftype];
+	      al = typeAlign[ftype];
+	      appendSubobj[fname, "Field", sz, al];
+	    ]
+	  ],
+	  cls["Fields"]
+	];
 
-  (*
-    7) Set up vertical limits so rows 1,2,3 all fit:
-       Our rectangles run from y=0.6 \[Dash] 1.4 (for row=1), 1.6 \[Dash] 2.4 (row=2), 2.6 \[Dash] 3.4 (row=3).
-       So we choose PlotRange\[RightArrow]{yMin,yMax} = {0.5, 3.5}.
-  *)
-  yMin = 0.5;
-  yMax = 3.5;
+  (* Round up final size to maxAlign *)
+  totalSize = Ceiling[offs/maxAlign]*maxAlign;
+  Print["    FINAL subobjects for ", className, " \[RightArrow] ", subobjs];
+  Print["    Computed Size = ", totalSize, ", Align = ", maxAlign];
+  <|
+    "Subobjects" -> subobjs,
+    "TotalSize"  -> totalSize,
+    "MaxAlign"   -> maxAlign
+  |>
+];
 
-  (*
-    8) Finally draw everything with Graphics[\[Ellipsis]].
-       We remove any PlotTheme, because low\[Hyphen]level Graphics does not accept it.
-  *)
+
+(* 4) DrawClassLayout: build a single Graphics *)
+DrawClassLayout[layout_Association] := Module[
+  {
+    subobjs   = layout["Subobjects"],
+    totalSize = layout["TotalSize"],
+    maxAlign  = layout["MaxAlign"],
+    maxCanvasWidth = 800,
+    scale,
+    rectangles = {},
+    labels = {},
+    tickMarks = {},
+    y0 = 50,       (* y\[Hyphen]offset for the subobject row *)
+    boxHeight = 60,
+    tickHeight = 15,
+    fontSizeField = 10,
+    fontSizeClass = 16
+  },
+  (* 4.a) scale factor so totalSize \[RightArrow] maxCanvasWidth *)
+  scale = maxCanvasWidth / totalSize;
+
+  (* 4.b) for each subobject, draw a big rectangle + tiny vptr/vbase if needed + text *)
+  Do[
+    Module[
+      {
+        name   = sub["Name"],
+        kind   = sub["Kind"],
+        offs   = sub["Offset"],
+        sz     = sub["Size"],
+        isVB   = If[ KeyExistsQ[sub, "IsVirtualBase"], sub["IsVirtualBase"], False ],
+        classV = If[ KeyExistsQ[sub, "ClassOfVtable"], sub["ClassOfVtable"], None ],
+        xLeft, xRight, rect, inner
+      },
+      xLeft  = scale * offs;
+      xRight = scale * (offs + sz);
+
+      (* big enclosing rectangle *)
+      rect = { Black, Rectangle[{xLeft, y0}, {xRight, y0 + boxHeight}] };
+      AppendTo[rectangles, rect];
+
+      (* tiny 8\[Times]8 vptr if needed *)
+      If[kind === "Vptr",
+        inner = {
+          Red,
+          EventHandler[
+            {
+              EdgeForm[Directive[Black, Thick]],
+              FaceForm[LightRed],
+              Rectangle[{xLeft, y0 + boxHeight - 8}, {xLeft + 8*scale, y0 + boxHeight}],
+              Text[
+                Style["vptr", Italic, 8, Red],
+                {xLeft + 4*scale, y0 + boxHeight - 4},
+                {0, 0}
+              ]
+            },
+            {
+              "MouseClicked" :> Tooltip[
+                Style[
+                  Column[{
+                    Style["vptr \[RightArrow] " <> classV, Bold, 12],
+                    Style["Offset: " <> ToString[offs] <> " bytes", 10]
+                  }],
+                  Background -> LightYellow
+                ],
+                Appearance -> Automatic,
+                TooltipDelay -> 0
+              ]
+            }
+          ]
+        };
+        AppendTo[labels, inner];
+      ];
+
+      (* tiny 8\[Times]8 vbase slot if needed *)
+      If[kind === "VbaseSlot",
+        inner = {
+          Red,
+          FaceForm[LightPink],
+          EdgeForm[{Black, Thick}],
+          Rectangle[{xLeft, y0 + boxHeight - 8}, {xLeft + 8*scale, y0 + boxHeight}],
+          Text[
+            Style["vbase", Italic, 8, Red],
+            {xLeft + 4*scale, y0 + boxHeight - 4},
+            {0, 0}
+          ]
+        };
+        AppendTo[labels, inner];
+      ];
+
+      (* main label: if it's a Field, use black small; otherwise (class subobject),
+         show class name in big red *)
+      If[kind === "Field",
+        inner = {
+          Black,
+          Text[
+            Style[name, Plain, fontSizeField],
+            { (xLeft + xRight)/2, y0 + boxHeight/2 },
+            {0, 0}
+          ]
+        };
+      ,
+        inner = {
+          Red,
+          Text[
+            Style[name, Bold, fontSizeClass],
+            { (xLeft + xRight)/2, y0 + boxHeight/2 },
+            {0, 0}
+          ]
+        };
+      ];
+      AppendTo[labels, inner];
+
+    ],
+    {sub, subobjs}
+  ];
+
+  (* 4.c) build tick marks every 8 bytes along the bottom *)
+  Do[
+    Module[{bx = scale * (8 n)},
+      AppendTo[tickMarks, {
+        {Black, Thick, Line[{{bx, y0 - 5}, {bx, y0 - tickHeight}}]},
+        {Black,
+         Text[
+           Style[ToString[8 n], Plain, 10],
+           {bx, y0 - tickHeight - 5},
+           {0, 1}
+         ]}
+      }];
+    ],
+    {n, 0, Ceiling[totalSize/8]}
+  ];
+
+  (* 4.d) assemble final Graphics *)
   Graphics[
-    {
-      (* a) Draw all rectangles in light gray with a black edge *)
-      EdgeForm[Black],
-      FaceForm[LightGray],
-      rects,
+ {
+  LightGray, Rectangle[{0, 0}, {4, 1}],     (* one 4-byte box *)
+  Black,    Text["x", {2, 0.5}],            (* field name in center *)
 
-      (* b) Draw all text labels in black on top of the rectangles *)
-      Black,
-      texts
-    },
-    Axes      -> True,
-    Ticks     -> {xTicks, None},            (* X ticks only, no Y ticks *)
-    PlotRange -> {{0, maxX}, {yMin, yMax}},
-    ImageSize -> 800,
-
-    (* Optional styling for axes (so you still get a neat horizontal axis) *)
-    AxesStyle -> Directive[Black, Thickness[0.001]],
-    AxesLabel -> {None, None},
-
-    (* Put some labels on the right\[Hyphen]hand side to explain which row is which *)
-    Epilog -> {
-      Text[
-        Style["Row 1\n(vptr slots)", Italic, 12],
-        Scaled[{0.02, 0.93}],
-        {-1, 0}
-      ],
-      Text[
-        Style["Row 2\n(vbase slots)", Italic, 12],
-        Scaled[{0.02, 0.57}],
-        {-1, 0}
-      ],
-      Text[
-        Style["Row 3\n(class data)", Italic, 12],
-        Scaled[{0.02, 0.21}],
-        {-1, 0}
-      ]
-    }
-  ]
+  Thick,
+  Line[{{0, 0}, {0, -0.2}}],  Text["0", {0, -0.4}],
+  Line[{{4, 0}, {4, -0.2}}],  Text["4", {4, -0.4}]
+ },
+ Axes -> False,
+ ImageSize -> 400,
+ PlotRange -> {{-0.5, 4.5}, {-1, 1.5}}
 ]
-
-
-
-(* ---------------------------------------------------------------------------- *)
-(* ParseAndDrawLayout (Interactive)                                            *)
-(* ---------------------------------------------------------------------------- *)
-ParseAndDrawLayout[] := Module[{file, cls, names, choice, lay},
-  file = SystemDialogInput["FileOpen"]; If[!StringQ[file]||!FileExistsQ[file], Return[$Canceled]];
-  cls  = ParseCppToClasses[file]; If[cls===$Failed, Return[$Failed]];
-  names= Keys[cls]; If[names==={}, Message[ParseAndDrawLayout::noClasses]; Return[$Failed]];
-  choice = ChoiceDialog["Select class:", Thread[names->names]]; If[!StringQ[choice], Return[$Canceled]];
-  lay = ComputeLayout[cls, choice]["Layout"]; DrawLayout[lay]
 ];
 
-ParseAndDrawLayout[path_String, className_String] := Module[{cls, res},
-  cls = ParseCppToClasses[path]; If[cls===$Failed, Return[$Failed]];
-  res = ComputeLayout[cls, className]; DrawLayout[res["Layout"]]
+
+(* 5) Interactive helpers *)
+ParseAndDrawClassLayout[] := Module[{file, cls, names, choice, lay},
+  file = SystemDialogInput["FileOpen"];
+  If[ !StringQ[file] || !FileExistsQ[file], Return[$Canceled] ];
+  cls = ParseCppToClasses[file];
+  If[ cls === $Failed, Return[$Failed] ];
+  names = Keys[cls];
+  If[ names === {}, Message[ParseAndDrawClassLayout::noClasses]; Return[$Failed] ];
+  choice = ChoiceDialog["Select class:", Thread[names -> names]];
+  If[ !StringQ[choice], Return[$Canceled] ];
+  lay = ComputeClassLayout[cls, choice]["Subobjects"];
+  DrawClassLayout[<|"Subobjects"->lay, "TotalSize"->ComputeClassLayout[cls, choice]["TotalSize"], "MaxAlign"->ComputeClassLayout[cls, choice]["MaxAlign"]|>]
 ];
 
-ComputeLayoutExample[path_String, className_String]:= Module[{cls,res},
-  cls = ParseCppToClasses[path]; If[cls===$Failed, Return[$Failed]];
-  res = ComputeLayout[cls, className]
+ParseAndDrawClassLayout[path_String, className_String] := Module[{cls, res},
+  cls = ParseCppToClasses[path];
+  If[ cls === $Failed, Return[$Failed] ];
+  res = ComputeClassLayout[cls, className];
+  DrawClassLayout[<|"Subobjects"->res["Subobjects"], "TotalSize"->res["TotalSize"], "MaxAlign"->res["MaxAlign"]|>]
 ];
 
-End[];
+
+(* 6) A small convenience wrapper *)
+ComputeClassLayoutExample[path_String, className_String] := Module[{cls, res},
+  cls = ParseCppToClasses[path];
+  If[ cls === $Failed, Return[$Failed] ];
+  res = ComputeClassLayout[cls, className];
+  res
+];
+
+
+End[];  (* `Private` *)
 
 EndPackage[];
-
-
-
 
