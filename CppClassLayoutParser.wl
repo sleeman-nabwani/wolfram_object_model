@@ -186,27 +186,61 @@ ParseCppToClasses[file_String] := Module[
 ];
 
 
+(* helper to find all virtual bases (direct + via non-virtual bases) *)
+ClearAll[getVirtBases];
+getVirtBases[classes_Association, className_String] := Module[
+  {
+    direct, nonv
+  },
+  direct = Cases[classes[className]["Bases"], {b_, True} :> b];
+  nonv   = Cases[classes[className]["Bases"], {b_, False} :> b];
+  DeleteDuplicates@Join[
+    direct,
+    Flatten[getVirtBases[classes, #] & /@ nonv]
+  ]
+];
+
+(* main layout function *)
 ClearAll[ComputeClassLayout];
 ComputeClassLayout[classes_Association, className_String] := Module[
   {
-    cls, nonV, virtV, rec,
+    cls,
+    dirPairs,            (* direct bases as {name, isVirt}? *)
+    directNames,         (* {Y1, Y2, \[Ellipsis]} *)
+    nonVirtualNames,
+    virtBaseNames,       (* all virtual bases, incl. indirect *)
+    rec,                 (* for recursion *)
+
+    (* layout\[Hyphen]building *)
     subobjs = {}, offs = 0, maxAlign = 1,
-    inherited, own, allEntries,
+
+    (* vtable assembly *)
+    inheritedAll, inheritedUniq,
+    ownQual, ownNames, inheritedFilt,
+    allEntries,
+
+    (* helper to record a subobject *)
     appendSubobj,
-    totalSize, fieldTypes, totalFieldSize, fieldAlign
+
+    (* field area *)
+    fieldTypes, totalFieldSize, fieldAlign,
+    totalSize
   },
 
-  (*\[LongDash]\[LongDash] sanity check \[LongDash]\[LongDash]*)
+  (* sanity check *)
   If[! KeyExistsQ[classes, className],
     Message[ComputeClassLayout::noClass, className];
     Return[$Failed]
   ];
-  cls   = classes[className];
-  nonV  = Select[cls["Bases"], ! #[[2]] &];
-  virtV = Select[cls["Bases"],    #[[2]] &];
-  rec   = ComputeClassLayout;
 
-  (*\[LongDash]\[LongDash] helper to append one subobject \[LongDash]\[LongDash]*)
+  cls = classes[className];
+  dirPairs       = cls["Bases"];
+  directNames    = dirPairs[[All, 1]];
+  nonVirtualNames= Cases[dirPairs, {b_, False} :> b];
+  virtBaseNames  = getVirtBases[classes, className];
+  rec            = ComputeClassLayout;  (* for recursive calls *)
+
+  (* subobject appender *)
   appendSubobj[name_, kind_, sz_, al_, opts___] := Module[
     {aOff = Ceiling[offs/al]*al, entry},
     offs = aOff;
@@ -222,26 +256,28 @@ ComputeClassLayout[classes_Association, className_String] := Module[
     maxAlign = Max[maxAlign, al];
   ];
 
-  (*\[LongDash]\[LongDash] 1) pull in inherited vtable entries (already qualified) \[LongDash]\[LongDash]*)
-  inherited = Flatten[
-    rec[classes, #[[1]]]["VTableEntries"] & /@ virtV
+  (* 1) Build the VTableEntries by merging direct bases *)
+  inheritedAll = Flatten[
+    rec[classes, #]["VTableEntries"] & /@ directNames
   ];
-
-  (*\[LongDash]\[LongDash] 2) qualify this class\[CloseCurlyQuote]s own vmethods \[LongDash]\[LongDash]*)
-  own = Map[
+  (* later bases override earlier *)
+  inheritedUniq = Reverse @ DeleteDuplicatesBy[
+    Reverse @ inheritedAll,
+    Last @ StringSplit[#, "::"] &
+  ];
+  (* qualify this class\[CloseCurlyQuote]s own methods *)
+  ownQual = Map[
     className <> "::" <> # &,
     Lookup[cls, "VTableEntries", {}]
   ];
-
-  (*\[LongDash]\[LongDash] 3) splice + override by method name \[LongDash]\[LongDash]*)
-  allEntries = Module[{joined = Join[inherited, own]},
-    Reverse @ DeleteDuplicatesBy[
-      Reverse @ joined,
-      Last @ StringSplit[#, "::"] &
-    ]
+  ownNames = Last @ StringSplit[#, "::"] & /@ ownQual;
+  inheritedFilt = Select[
+    inheritedUniq,
+    ! MemberQ[ownNames, Last @ StringSplit[#, "::"]] &
   ];
+  allEntries = Join[ownQual, inheritedFilt];
 
-  (*\[LongDash]\[LongDash] 4) vptr slot \[LongDash]\[LongDash]*)
+  (* 2) vptr slot *)
   If[Length[allEntries] > 0,
     appendSubobj[
       "vptr", "Vptr", 8, 8,
@@ -250,31 +286,30 @@ ComputeClassLayout[classes_Association, className_String] := Module[
     ];
   ];
 
-  (*\[LongDash]\[LongDash] 5) virtual-base pointer slots \[LongDash]\[LongDash]*)
+  (* 3) one vbase\[Hyphen]pointer per virtual base *)
   Scan[
-    With[{b = #[[1]]},
+    With[{b = #},
       appendSubobj[
-        "vbase:" <> b, "VbaseSlot",
-        8, 8,
+        "vbase:" <> b, "VbaseSlot", 8, 8,
         "IsVirtualBase" -> True,
         "VBaseOf"       -> b
       ]
     ] &,
-    virtV
+    virtBaseNames
   ];
 
-  (*\[LongDash]\[LongDash] 6) non-virtual bases \[LongDash]\[LongDash]*)
+  (* 4) flatten each direct non-virtual base *)
   Scan[
-    With[{b = #[[1]], sl = rec[classes, #[[1]]]},
+    With[{b = #, sl = rec[classes, #]},
       appendSubobj[
         b, "NonVirtualBase",
         sl["TotalSize"], sl["MaxAlign"]
       ]
     ] &,
-    nonV
+    nonVirtualNames
   ];
 
-  (*\[LongDash]\[LongDash] 7) this class\[CloseCurlyQuote]s own field+slot region \[LongDash]\[LongDash]*)
+  (* 5) this class\[CloseCurlyQuote]s own field + method\[Hyphen]slot region *)
   fieldTypes     = cls["Fields"][[All, 2]];
   totalFieldSize = Total[typeSize /@ fieldTypes] + 8*Length[allEntries];
   fieldAlign     = If[fieldTypes === {}, 1, Max[typeAlign /@ fieldTypes]];
@@ -284,19 +319,19 @@ ComputeClassLayout[classes_Association, className_String] := Module[
     Max[fieldAlign, 8]
   ];
 
-  (*\[LongDash]\[LongDash] 8) actual virtual-base subobject(s) at end \[LongDash]\[LongDash]*)
+  (* 6) actual virtual\[Hyphen]base subobject at end *)
   Scan[
-    With[{b = #[[1]], sl = rec[classes, #[[1]]]},
+    With[{b = #, sl = rec[classes, #]},
       appendSubobj[
         b, "VirtualBase",
         sl["TotalSize"], sl["MaxAlign"],
         "IsVirtualBase" -> True
       ]
     ] &,
-    virtV
+    virtBaseNames
   ];
 
-  (*\[LongDash]\[LongDash] finalize & return \[LongDash]\[LongDash]*)
+  (* finalize total size & return *)
   totalSize = Ceiling[offs/maxAlign]*maxAlign;
   <|
     "ClassName"     -> className,
@@ -310,85 +345,104 @@ ComputeClassLayout[classes_Association, className_String] := Module[
 
 
 ClearAll[DrawClassDiagram];
-DrawClassDiagram[layout_Association] := Module[
+Options[DrawClassDiagram] = {
+  MaxObjectWidth -> 1000,  (* maximum width of the object bar in pixels *)
+  SlotHeight      -> 20,   (* height of each vtable slot in pixels *)
+  VTableWidth     -> 60,   (* width of the vtable panel in pixels *)
+  GapHeight       -> 10,   (* vertical gap between object and vtable in pixels *)
+  ArrowSize       -> 0.03  (* relative arrowhead size *)
+};
+
+DrawClassDiagram[
+  layout_Association,
+  opts : OptionsPattern[]
+] := Module[
   {
-    subobjs   = layout["Subobjects"],
-    vtbl      = layout["VTableEntries"],
-    totalSize = layout["TotalSize"],
-
-    (* geometry parameters *)
-    objHeight = 1,                   (* fixed height of object panel *)
-    objWidth  = layout["TotalSize"], (* horizontal bytes *)
-    slotH     = 1,                   (* height per vtable slot *)
-    vtabW     = 0.6,                 (* width of vtable panel *)
-    sp        = 0.5,                 (* horizontal spacing *)
-
-    x2, ptrEntry, vtabHeight
+    subobjs    = layout["Subobjects"],
+    vtbl       = layout["VTableEntries"],
+    totalSize  = layout["TotalSize"],
+    (* pull options *)
+    maxOW      = OptionValue[MaxObjectWidth],
+    slotH      = OptionValue[SlotHeight],
+    vW         = OptionValue[VTableWidth],
+    gapH       = OptionValue[GapHeight],
+    aSz        = OptionValue[ArrowSize],
+    (* derived dims *)
+    nSlots, objW, scale, yObj,
+    ptr, ptrX
   },
 
-  (* compute where vtable panel starts *)
-  vtabHeight = Length[vtbl]*slotH;
-  x2 = objWidth + sp;
+  nSlots = Length[vtbl];
 
-  (* find the vptr subobject, if present *)
-  ptrEntry = SelectFirst[subobjs, #["Kind"]==="Vptr"&, None];
+  (* 1) Compute object-bar width (capped at MaxObjectWidth) *)
+  objW  = Min[maxOW, totalSize*slotH];
+  scale = objW/totalSize;                 (* pixels per \[OpenCurlyDoubleQuote]byte\[CloseCurlyDoubleQuote] *)
+  yObj  = nSlots*slotH + gapH;            (* y-coordinate of object bar *)
+
+  (* 2) Locate the vptr slot for arrow origin *)
+  ptr   = SelectFirst[subobjs, #["Kind"] === "Vptr"&, None];
+  ptrX  = If[ptr =!= None,
+            (ptr["Offset"] + ptr["Size"]/2)*scale,
+            objW/2
+          ];
 
   Graphics[
     {
-      (* \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] Object panel \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
+      (* \[HorizontalLine]\[HorizontalLine] Object bar \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
       FaceForm[None], EdgeForm[Black],
-      (* outer box *)
-      Rectangle[{0, 0}, {objWidth, objHeight}],
+      (* outer rectangle *)
+      Rectangle[{0, yObj}, {objW, yObj + slotH}],
       (* each subobject *)
       Table[
         {
           EdgeForm[GrayLevel[0.7]], FaceForm[None],
           Rectangle[
-            {sub["Offset"], 0},
-            {sub["Offset"] + sub["Size"], objHeight}
+            { sub["Offset"]*scale,         yObj},
+            {(sub["Offset"] + sub["Size"])*scale, yObj + slotH}
           ],
           Text[
             sub["Name"],
-            {sub["Offset"] + sub["Size"]/2, objHeight/2}
+            { (sub["Offset"] + sub["Size"]/2)*scale, yObj + slotH/2 }
           ]
         },
         {sub, subobjs}
       ],
 
-      (* \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] VTable panel \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
+      (* \[HorizontalLine]\[HorizontalLine] VTable panel \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
       FaceForm[None], EdgeForm[Black],
-      (* outer box *)
-      Rectangle[{x2, 0}, {x2+vtabW, vtabHeight}],
-      (* each vtable entry *)
+      (* outer rectangle *)
+      Rectangle[{0, 0}, {vW, nSlots*slotH}],
+      (* each slot & label *)
       Table[
-        Text[
-          vtbl[[i]],
-          {
-            x2 + vtabW/2,
-            vtabHeight - (i - 0.5)*slotH
-          }
-        ],
-        {i, Length[vtbl]}
+        {
+          EdgeForm[Black], FaceForm[None],
+          Rectangle[
+            {0,              slotH*(nSlots - i)},
+            {vW,             slotH*(nSlots - i + 1)}
+          ],
+          Text[
+            vtbl[[i]],
+            {vW/2, slotH*(nSlots - i) + slotH/2}
+          ]
+        },
+        {i, nSlots}
       ],
 
-      (* \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] Arrow from vptr \[RightArrow] vtable midpoint \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
-      If[ptrEntry =!= None,
+      (* \[HorizontalLine]\[HorizontalLine] Vertical arrow from vptr \[RightArrow] vtable mid \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
+      Arrowheads[aSz],
+      If[ptr =!= None,
         Arrow[{
-          (* start at center of vptr rectangle *)
-          { ptrEntry["Offset"] + ptrEntry["Size"]/2, objHeight/2 },
-          (* end at center of vtable panel *)
-          { x2, vtabHeight/2 }
+          {ptrX,                yObj},
+          {ptrX,                slotH*nSlots},
+          {0.9*vW,              slotH*nSlots}   (* small horizontal kick *)
         }],
         {}
       ]
     },
-
-    Axes      -> False,
-    Frame     -> False,
-    PlotRange -> {
-      {0, x2 + vtabW},
-      {0, Max[objHeight, vtabHeight]}
-    }
+    PlotRange   -> {{0, Max[objW, vW]}, {0, yObj + slotH}},
+    ImageSize   -> {Max[objW, vW], Automatic},
+    Axes        -> False,
+    Frame       -> False
   ]
 ];
 
