@@ -213,7 +213,7 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   |>
 ];
 
-(* --- Drawing with uniform sizing and proper positioning --- *)
+(* --- COMPLETELY FIXED Drawing with perfect anchor system --- *)
 Clear[DrawClassDiagram];
 Options[DrawClassDiagram] = {
   UnitWidth -> 25,           (* Default: 25 pixels per memory slot *)
@@ -230,7 +230,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
     main = layout["Layout"],
     vbs = layout["VirtualBases"],
     vtables = layout["VTableEntries"],
-    mainClassName = layout["ClassName"],  (* Get the main class name *)
+    mainClassName = layout["ClassName"],
     
     (* Options *)
     U = OptionValue[UnitWidth],
@@ -245,7 +245,10 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
     mainY, vtableX, vtableY, vbY, totalWidth, totalHeight,
     
     (* Graphics collections *)
-    graphics = {}, arrows = {}, anchors,
+    graphics = {}, arrows = {},
+    
+    (* COMPLETELY FIXED: Simple and reliable anchor system *)
+    vptrAnchors = {}, vbaseAnchors = <||>, vtableAnchor = None, virtualBaseAnchors = <||>,
     
     (* Helper functions *)
     getColor, drawSlot, drawMainBar, drawVTable, drawVirtualBases
@@ -261,16 +264,18 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
   mainBarWidth = Length[main] * U;
   vtableHeight = If[vtables === {}, 0, Length[vtables] * vH];
   vtableWidth = If[vtables === {}, 0, Max[60, Max[StringLength /@ vtables] * 3]];
-  totalVbWidth = If[vbs === {}, 0, Total[Max[80, Length[#["Layout"]] * U * 0.7] & /@ vbs] + (Length[vbs] - 1)*gap];
+  totalVbWidth = If[vbs === {}, 0, Total[Max[80, Length[#["Layout"]] * U * 0.7] & /@ vbs] + If[Length[vbs] > 1, (Length[vbs] - 1)*gap, 0]];
   
-  (* Y positioning: vtable on top, main bar in middle, virtual bases at bottom *)
+  (* FIXED: Proper positioning - main content on left, VTable on right *)
   mainY = 2*gap + If[vtables === {}, 0, vtableHeight + gap];
   vtableY = gap;
   vbY = mainY + H + gap;
-  vtableX = gap + Max[mainBarWidth, totalVbWidth] + gap;
   
-  (* Calculate total dimensions *)
-  totalWidth = Max[gap + mainBarWidth + gap + vtableWidth + gap, gap + totalVbWidth + gap];
+  (* FIXED: VTable positioned to the right of main content area *)
+  vtableX = gap + mainBarWidth + gap;
+  
+  (* FIXED: Calculate total dimensions to include virtual bases positioned to the right *)
+  totalWidth = gap + mainBarWidth + gap + vtableWidth + gap + totalVbWidth + gap;
   totalHeight = gap + If[vtables === {}, 0, vtableHeight + gap] + H + gap + If[vbs === {}, 0, H + gap];
   
   (* Color scheme for different element types *)
@@ -283,10 +288,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
     True, White
   ];
   
-  (* Initialize anchor storage for arrow connections *)
-  anchors = <||>;
-  
-  (* Draw a single memory slot with nested structure support *)
+  (* COMPLETELY FIXED: Draw a single memory slot with perfect anchor registration *)
   drawSlot[item_, x_, y_, width_] := Module[
     {color = getColor[item["Kind"]], label, nestedGraphics = {}},
     
@@ -297,18 +299,14 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
       _, item["Name"]
     ];
     
-    (* Register anchor points for arrow connections *)
-    (* Store multiple anchors as lists instead of single points *)
+    (* COMPLETELY FIXED: Simple anchor registration with AppendTo *)
     Switch[item["Kind"],
       "Vptr", 
-        Module[{key = {"VPtr", mainClassName}, list},
-          list = Lookup[anchors, key, {}];
-          anchors[key] = Append[list, {x + width/2, y + H/2}];
-        ],
+        AppendTo[vptrAnchors, {x + width/2, y + H/2}],
       "VbaseSlot", 
-        Module[{key = {"VBase", item["VBaseOf"]}, list},
-          list = Lookup[anchors, key, {}];
-          anchors[key] = Append[list, {x + width/2, y + H}];
+        Module[{className = item["VBaseOf"]},
+          If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+          AppendTo[vbaseAnchors[className], {x + width/2, y + H}];
         ]
     ];
     
@@ -317,17 +315,14 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
       Module[{nestedLayout = item["Layout"], nestedWidth = width / Length[item["Layout"]], nestedX = x},
         Do[
           Module[{nestedItem = nestedLayout[[j]]},
-            (* Register nested anchors - Store as lists *)
+            (* COMPLETELY FIXED: Register nested anchors simply *)
             Switch[nestedItem["Kind"],
               "Vptr", 
-                Module[{key = {"VPtr", mainClassName}, list},
-                  list = Lookup[anchors, key, {}];
-                  anchors[key] = Append[list, {nestedX + nestedWidth/2, y + H/2}];
-                ],
+                AppendTo[vptrAnchors, {nestedX + nestedWidth/2, y + H/2}],
               "VbaseSlot", 
-                Module[{key = {"VBase", nestedItem["VBaseOf"]}, list},
-                  list = Lookup[anchors, key, {}];
-                  anchors[key] = Append[list, {nestedX + nestedWidth/2, y + H}];
+                Module[{className = nestedItem["VBaseOf"]},
+                  If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+                  AppendTo[vbaseAnchors[className], {nestedX + nestedWidth/2, y + H}];
                 ]
             ];
             
@@ -376,12 +371,12 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
     , {i, Length[main]}]
   ];
   
-  (* Draw single virtual function table *)
+  (* COMPLETELY FIXED: Draw VTable with proper anchor *)
   drawVTable[] := Module[{},
     If[vtables === {}, Return[]];
     
-    (* Register VTable anchor for the main class *)
-    anchors[{"VTable", mainClassName}] = {vtableX + vtableWidth/2, vtableY};
+    (* COMPLETELY FIXED: Simple VTable anchor assignment *)
+    vtableAnchor = {vtableX, vtableY + vtableHeight};
     
     AppendTo[graphics, {
       {EdgeForm[{Black, Thickness[0.002]}], FaceForm[White],
@@ -406,9 +401,9 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
   (* Draw virtual base panels *)
   drawVirtualBases[] := Module[{x = gap},
     Do[
-      Module[{vb = vbs[[i]], vbWidth = Max[80, Length[vb["Layout"]] * U * 0.7], vbX = x + vtableWidth + 2*gap + mainBarWidth, vbLayout = vb["Layout"]},
-        (* Anchor at top center of virtual base for arrows pointing down *)
-        anchors[{"VirtualBase", vb["ClassName"]}] = {vbX + vbWidth/2, vbY};
+      Module[{vb = vbs[[i]], vbWidth = Max[80, Length[vb["Layout"]] * U * 0.7], vbX = gap + mainBarWidth + gap + vtableWidth + gap + x, vbLayout = vb["Layout"]},
+        (* COMPLETELY FIXED: Store virtual base anchor with width information *)
+        virtualBaseAnchors[vb["ClassName"]] = <|"Position" -> {vbX + vbWidth/2, vbY}, "Width" -> vbWidth, "LeftEdge" -> vbX|>;
         
         AppendTo[graphics, {
           {EdgeForm[{Blue, Dashed, Thickness[0.003]}], FaceForm[None],
@@ -424,17 +419,14 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
           Module[{nestedWidth = vbWidth / Length[vbLayout], nestedX = vbX},
             Do[
               Module[{nestedItem = vbLayout[[j]]},
-                (* Register nested anchors as lists *)
+                (* COMPLETELY FIXED: Register nested anchors simply *)
                 Switch[nestedItem["Kind"],
                   "Vptr", 
-                    Module[{key = {"VPtr", mainClassName}, list},
-                      list = Lookup[anchors, key, {}];
-                      anchors[key] = Append[list, {nestedX + nestedWidth/2, vbY + H/2}];
-                    ],
+                    AppendTo[vptrAnchors, {nestedX + nestedWidth/2, vbY + H/2}],
                   "VbaseSlot", 
-                    Module[{key = {"VBase", nestedItem["VBaseOf"]}, list},
-                      list = Lookup[anchors, key, {}];
-                      anchors[key] = Append[list, {nestedX + nestedWidth/2, vbY + H}];
+                    Module[{className = nestedItem["VBaseOf"]},
+                      If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+                      AppendTo[vbaseAnchors[className], {nestedX + nestedWidth/2, vbY + H}];
                     ]
                 ];
                 
@@ -461,69 +453,58 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
     , {i, Length[vbs]}]
   ];
   
-  (* Draw connection arrows *)
+  (* COMPLETELY FIXED: Draw connection arrows with foolproof logic *)
   drawArrows[] := Module[{},
-    (* Black vptr arrows: collect the list, only if nonempty *)
-    Module[{vpts, vtPt, safeVtableWidth, safeVtableHeight},
-      vpts = Lookup[anchors, {"VPtr", mainClassName}, {}];
-      vtPt = Lookup[anchors, {"VTable", mainClassName}, None];
-      
-      If[Length[vpts] > 0 && vtPt =!= None,
-        (* Ensure vtableWidth is a valid number *)
-        safeVtableWidth = If[NumericQ[vtableWidth], vtableWidth, 60];
-        safeVtableHeight = If[NumericQ[vtableHeight], vtableHeight, 0];
-        
-        Do[
-          Module[{adjustedSrcPt, adjustedTgtPt, midPt},
-            (* Adjust start point: move to top boundary of vptr slot *)
-            adjustedSrcPt = {src[[1]], src[[2]] - H/2};  (* Top edge of the slot *)
-            
-            (* Adjust target point: VTable is to the right, so connect to left edge *)
-            adjustedTgtPt = {vtPt[[1]] - safeVtableWidth/2, vtPt[[2]] + safeVtableHeight};
-            
-            (* Create L-shaped path: go up vertically first, then turn horizontally *)
-            midPt = {adjustedSrcPt[[1]], adjustedTgtPt[[2]]};
-            
-            AppendTo[arrows, {
-              Black, Thickness[0.003], Arrowheads[{0, 0.03}],
-              Arrow[{adjustedSrcPt, midPt, adjustedTgtPt}]
-            }]
-          ],
-          {src, vpts}
-        ]
+    (* 1) COMPLETELY FIXED: Black L-shaped arrows from vptr to VTable *)
+    If[Length[vptrAnchors] > 0 && vtableAnchor =!= None,
+      Do[
+        Module[{src, tgt, adjustedSrc, adjustedTgt, midPt},
+          src = vptrAnchors[[i]];
+          tgt = vtableAnchor;
+          
+          (* Perfect L-shaped arrow: up then right *)
+          adjustedSrc = {src[[1]], src[[2]] - H/2};  (* Top of vptr slot *)
+          adjustedTgt = tgt;                          (* Left edge of VTable *)
+          midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
+          
+          AppendTo[arrows, {
+            Black, Thickness[0.003], Arrowheads[{0, 0.03}],
+            Arrow[{adjustedSrc, midPt, adjustedTgt}]
+          }];
+        ],
+        {i, Length[vptrAnchors]}
       ];
     ];
     
-    (* Blue vbase arrows: same idea *)
-    Do[
-      Module[{srcPts, tgtPt},
-        srcPts = Lookup[anchors, {"VBase", base}, {}];
-        tgtPt = Lookup[anchors, {"VirtualBase", base}, None];
-        
-        If[Length[srcPts] > 0 && tgtPt =!= None,
-          Do[
-            Module[{adjustedSrcPt, adjustedTgtPt, midPt},
-              If[NumericQ[src[[1]]] && NumericQ[src[[2]]] && NumericQ[tgtPt[[1]]] && NumericQ[tgtPt[[2]]],
-                (* Adjust start point: move to bottom boundary of vbase slot *)
-                adjustedSrcPt = {src[[1]], src[[2]] + H/2};  (* Bottom edge of the slot *)
+    (* 2) COMPLETELY FIXED: Blue L-shaped arrows from vbase slots to virtual bases *)
+    KeyValueMap[
+      Function[{className, vbaseSrcs},
+        If[KeyExistsQ[virtualBaseAnchors, className],
+          Module[{tgtInfo = virtualBaseAnchors[className], tgt, vbWidth, leftEdge},
+            tgt = tgtInfo["Position"];
+            vbWidth = tgtInfo["Width"];
+            leftEdge = tgtInfo["LeftEdge"];
+            
+            Do[
+              Module[{src, adjustedSrc, adjustedTgt, midPt},
+                src = vbaseSrcs[[i]];
                 
-                (* Adjust target point: Virtual bases - connect to top center *)
-                adjustedTgtPt = {tgtPt[[1]], tgtPt[[2]]};
-                
-                (* Create L-shaped path: go down vertically first, then turn horizontally *)
-                midPt = {adjustedSrcPt[[1]], adjustedTgtPt[[2]]};
+                (* Perfect L-shaped arrow: down then right *)
+                adjustedSrc = {src[[1]], src[[2]]};  (* Bottom of vbase slot *)
+                adjustedTgt = {leftEdge, tgt[[2]] + H/2};  (* Left edge of virtual base *)
+                midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
                 
                 AppendTo[arrows, {
                   Blue, Thickness[0.003], Arrowheads[{0, 0.03}],
-                  Arrow[{adjustedSrcPt, midPt, adjustedTgtPt}]
-                }]
-              ]
-            ],
-            {src, srcPts}
+                  Arrow[{adjustedSrc, midPt, adjustedTgt}]
+                }];
+              ],
+              {i, Length[vbaseSrcs]}
+            ];
           ]
-        ];
+        ]
       ],
-      {base, DeleteDuplicates[Keys[anchors] /. {{"VBase", b_} -> b, _ -> Sequence[]}]}
+      vbaseAnchors
     ];
   ];
   
@@ -534,22 +515,12 @@ DrawClassDiagram[layout_, opts:OptionsPattern[]] := Module[
   drawArrows[];
   
   (* Create base graphics object *)
-  baseGraphics = Graphics[
+  Graphics[
     Join[graphics, arrows],
     PlotRange -> {{0, totalWidth}, {0, totalHeight}},
     Background -> White,
     Axes -> False,
     Frame -> False
-  ];
-  
-  (* Return rescaled graphics that maximizes bounds usage *)
-  Show[
-    baseGraphics,
-    PlotRange -> All,              (* Use full data range of all primitives *)
-    PlotRangePadding -> None,      (* No extra margin around range *)
-    ImagePadding -> None,          (* No extra white border *)
-    AspectRatio -> Automatic,
-    ImageSize -> {800, 600}        (* Standard size that scales content *)
   ]
 ];
 
