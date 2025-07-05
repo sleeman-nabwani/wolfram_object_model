@@ -2,476 +2,1092 @@
 
 (*
    CppClassLayoutParser.wl
-
-   Provides:
-
-     \[Bullet] ParseCppToClasses[path_String]    \[Dash] uses clang to dump a JSON AST, then
-                                         builds an Association:
-       <|
-         "ClassName1" -> <|
-             "AST"    -> <\[Ellipsis]raw AST node\[Ellipsis]>,
-             "Bases"  -> { {"BaseA", False}, {"BaseB", True}, \[Ellipsis] },
-             "Fields" -> { {"field1", "int"}, {"field2", "double"}, \[Ellipsis] }
-           |>,
-         "ClassName2" -> <| \[Ellipsis] |>,
-         \[Ellipsis]
-       |>
-
-     \[Bullet] ComputeClassLayout[classes_Association, className_String]  
-         \[Dash] walks that Association recursively and returns
-       <|
-         "Subobjects" -> { <|"Name"->\[Ellipsis],"Kind"->\[Ellipsis],"Offset"->\[Ellipsis],"Size"->\[Ellipsis],
-                             (* optional keys: "ClassOfVtable", "IsVirtualBase" *) |>, \[Ellipsis] },
-         "TotalSize"  -> totalBytes,
-         "MaxAlign"   -> maxAlignment
-       |>
-
-     \[Bullet] DrawClassLayout[layout_Association]  
-         \[Dash] turns the output of ComputeClassLayout[\[Ellipsis]] into a single Graphics
-           showing each subobject\[CloseCurlyQuote]s rectangle, little \[OpenCurlyDoubleQuote]vptr\[CloseCurlyDoubleQuote]/\[OpenCurlyDoubleQuote]vbase\[CloseCurlyDoubleQuote] slots
-           in red, and a tick\[Hyphen]mark ruler below.
-
-     \[Bullet] ParseAndDrawClassLayout[ ] and ParseAndDrawClassLayout[path_String, className_String]
-         \[Dash] interactive helpers for picking a file, a class, then invoking
-           ComputeClassLayout<>DrawClassLayout.
-
-   To use: put this file somewhere (e.g. \[OpenCurlyDoubleQuote]CppClassLayoutParser.wl\[CloseCurlyDoubleQuote]), then in
-   Mathematica evaluate
-
-     << "path/to/CppClassLayoutParser.wl";
-
-   and call e.g.
-
-     clsAssoc = ParseCppToClasses["MyHeader.hpp"];
-     layoutX = ComputeClassLayout[clsAssoc, "X"];
-     DrawClassLayout[layoutX];
-
-   etc.
+  C++ Class Memory Layout Visualization Tool
+  Parses C++ headers via clang AST and creates publication-quality memory layout diagrams
 *)
 
 BeginPackage["CppClassLayoutParser`"];
 
 ParseCppToClasses::usage =
-  "ParseCppToClasses[path_String] parses the given C++ header via clang's \
-AST dump (JSON) and returns an Association of the form \
-  <| \
-    \"ClassA\" -> <| \
-        \"AST\"    -> <\[Ellipsis]raw AST node\[Ellipsis]>, \
-        \"Bases\"  -> { {\"Base1\", False}, {\"Base2\", True}, \[Ellipsis] }, \
-        \"Fields\" -> { {\"fld1\", \"int\"}, {\"fld2\", \"double\"}, \[Ellipsis] } \
-      |>, \
-    \"Base1\" -> <| \[Ellipsis] |>, \
-    \[Ellipsis] \
-  |> \
-Each class entry lists its immediate bases (name, isVirtual) and its data \
-fields (fieldName, typeString).";
-
+  "ParseCppToClasses[path_String] parses a C++ header via clang's JSON AST and returns an Association of class definitions.";
 
 ComputeClassLayout::usage =
-  "ComputeClassLayout[classes_Association, className_String] \
-recursively computes the in-memory layout of className (including all \
-non-virtual and virtual bases, vptr slots, vbase slots, and ordinary fields). \
-Returns an Association: \
-  <| \
-    \"Subobjects\" -> { subobj1, subobj2, \[Ellipsis] }, \
-    \"TotalSize\"  -> totalSizeInBytes, \
-    \"MaxAlign\"   -> maxAlignment \
-  |> \
-where each subobj is an Association: \
-  <| \
-    \"Name\"         -> \"X\",       (* class or field name *) \
-    \"Kind\"         -> \"NonVirtualBase\" or \"VirtualBase\" or \"Vptr\" or \
-                       \"VbaseSlot\" or \"Field\", \
-    \"Offset\"       -> offsetInBytes, \
-    \"Size\"         -> sizeInBytes, \
-    (* optional: if Kind->\"Vptr\", then \"ClassOfVtable\"->className *) \
-    (* optional: if Kind->\"VirtualBase\", then \"IsVirtualBase\"->True *) \
-  |>.";
-  
+  "ComputeClassLayout[classes_Association, className_String] computes the memory layout for the specified class, returning an Association with Layout, VirtualBases, TotalSize, MaxAlign, and VTableEntries.";
   
 DrawClassDiagram::usage = 
-  "DrawClassDiagram[layout_Association] takes the output of \
-ComputeClassLayout and draws a two-panel diagram (vtable on the left, \
-object layout + ruler on the right).";
-
+  "DrawClassDiagram[layout_Association] creates a visualization of the class memory layout with vtables, virtual bases, and connecting arrows.";
 
 ParseAndDrawClassLayout::usage =
-  "ParseAndDrawClassLayout[] opens a file-picker, lets you choose a C++ \
-header, picks a class by name, and draws the layout. \
-ParseAndDrawClassLayout[path_String, className_String] does the same \
-programmatically."
+  "ParseAndDrawClassLayout[] opens a file dialog to select a C++ header file and class to visualize.";
+
+ParseAndDrawClassLayoutPath::usage =
+  "ParseAndDrawClassLayoutPath[path_String] or ParseAndDrawClassLayoutPath[path_String, className_String] parses and visualizes a specific C++ file and optionally a specific class.";
+
+RescaleClassDiagram::usage = 
+  "RescaleClassDiagram[diagram, width, height] rescales a class diagram to fit exactly within the specified dimensions, maximizing the use of available space.";
 
 Begin["`Private`"];
 
-
-(* 1) typeSize / typeAlign helpers *)
+(* --- Type size and alignment helpers --- *)
 typeSize["char"]   := 1;
 typeSize["int"]    := 4;
 typeSize["double"] := 8;
-typeSize[_]        := 8;   (* default for any unknown type *)
+typeSize[_]        := 8;  (* Default to pointer size *)
 typeAlign[t_]      := typeSize[t];
 
+(* --- Collect virtual bases recursively --- *)
+getVirtBases[classes_, cls_] := Module[{rec, bs, v, nv},
+  rec = getVirtBases[classes, #]&;
+  If[!KeyExistsQ[classes, cls], Return[{}]];
+  bs = Lookup[classes[cls], "Bases", {}];
+  v  = Cases[bs, {b_, True} :> b];   (* Virtual bases *)
+  nv = Cases[bs, {b_, False} :> b];  (* Non-virtual bases *)
+  DeleteDuplicates@Join[v, Flatten[rec /@ nv]]
+];
 
-(* 2) ParseCppToClasses: run clang, get JSON, extract CXXRecordDecls *)
+(* --- Parse C++ via clang AST dump --- *)
 ParseCppToClasses[file_String] := Module[
   {out, json, nodes, classes},
-  If[ !StringQ[file] || !FileExistsQ[file],
-    Message[ParseCppToClasses::noFile, file]; 
+  If[!FileExistsQ[file], 
+    Message[ParseCppToClasses::nofile, file]; 
     Return[$Failed]
   ];
-  out = RunProcess[
-    {
+  
+  out = RunProcess[{
       "clang", "-x", "c++", "-std=c++17", "-fsyntax-only", 
       "-fno-color-diagnostics", "-Xclang", "-ast-dump=json", file
-    },
-    "StandardOutput"
-  ];
-  If[ !StringQ[out] || StringTrim[out] === "",
-    Message[ParseCppToClasses::badAST, file]; 
+  }, "StandardOutput"];
+  
+  json = Quiet@Check[ImportString[out, "RawJSON"], $Failed];
+  If[!AssociationQ[json], 
+    Message[ParseCppToClasses::parsefail, file]; 
     Return[$Failed]
   ];
-  json = Quiet@Check[ ImportString[out, "RawJSON"], $Failed ];
-  If[ !AssociationQ[json],
-    Message[ParseCppToClasses::badAST, file]; 
-    Return[$Failed]
-  ];
-  nodes = Cases[
-	  json,
-	  assoc_Association /; assoc["kind"] === "CXXRecordDecl",
-	  Infinity
-  ];
+  
+  nodes = Cases[json, a_Association /; a["kind"] === "CXXRecordDecl", Infinity];
   classes = Association@Reap[
     Scan[
       Function[node,
 	        If[
-		      MatchQ[node, _Association] &&
-		      node["kind"] === "CXXRecordDecl" &&
 		      KeyExistsQ[node, "name"] &&
-		      (* 1) skip purely implicit records: *)
 		      !Lookup[node, "isImplicit", False] &&
-		      (* 2) skip anything with no real \[OpenCurlyDoubleQuote]loc\[CloseCurlyDoubleQuote] info: *)
-		      KeyExistsQ[node, "loc"] && node["loc"] =!= <||> &&
-		      (* 3) only full definitions, not forward\[Hyphen]decls: *)
 		      Lookup[node, "completeDefinition", False],
-		      
-		      Print["Class \"", node["name"], "\" location: ", Lookup[node, "loc", <||>]];
 		      Sow[
 		        node["name"] -> <|
-		          "AST"    -> node,
-		          "Bases"  -> Map[{Lookup[#1, "type", <|"qualType"->""|>]["qualType"],
-		                           Lookup[#1, "isVirtual", False]} &,
-		                         Lookup[node, "bases", {}]],
-		          "Fields" -> Map[{#1["name"], #1["type"]["qualType"]} &,
-		                          Select[Lookup[node, "inner", {}],
-		                                 (#1["kind"] === "FieldDecl") &]],
-		          (* \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] collect all virtual methods in this class \[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
-		          "VTableEntries" ->
-				    Map[
-				      Lookup[#,"name"]&,
-				      Select[
-				        Lookup[node,"inner",{}],
-				        #["kind"] === "CXXMethodDecl" &&
-				        Lookup[#,"virtual", False] === True &
+              "Bases" -> Map[
+                {#["type"]["qualType"], Lookup[#, "isVirtual", False]}&,
+                Lookup[node, "bases", {}]
+              ],
+              "Fields" -> Map[
+                {#["name"], #["type"]["qualType"]}&,
+                Select[node["inner"], #["kind"] === "FieldDecl"&]
+              ],
+              "VTableEntries" -> Map[
+                Lookup[#, "name"]&,
+                Select[node["inner"],
+                  (#["kind"] === "CXXMethodDecl" && Lookup[#, "virtual", False])&
 				      ]
 				    ]                             
 		     |>
 		   ]
-	    ];
+        ]
       ],
       nodes
     ]
   ][[2]];
-  Print["\[RightArrow] FINAL classes keys: ",Keys[classes]];
   classes
 ];
 
+ParseCppToClasses::nofile = "File `1` does not exist.";
+ParseCppToClasses::parsefail = "Failed to parse C++ file `1`. Check that clang is installed and the file has valid C++ syntax.";
 
-(* helper to find all virtual bases (direct + via non-virtual bases) *)
-ClearAll[getVirtBases];
-getVirtBases[classes_Association, className_String] := Module[
-  {
-    direct, nonv
+(* --- Compute hierarchical memory layout --- *)
+Clear[ComputeClassLayout];
+ComputeClassLayout::noClass = "Class `1` not found in the parsed classes.";
+
+ComputeClassLayout[classes_Association, cls_String] := Module[
+  {rec, data, bases, nv, virt, layout = {}, offs = 0, maxA = 1,
+   append, inherited, ownVT, allVT, vbLayouts, size, align, vtableEntries,
+   
+   (* ENHANCED: Add proper virtual function dispatch resolution *)
+   resolveVTableEntries
   },
-  direct = Cases[classes[className]["Bases"], {b_, True} :> b];
-  nonv   = Cases[classes[className]["Bases"], {b_, False} :> b];
-  DeleteDuplicates@Join[
-    direct,
-    Flatten[getVirtBases[classes, #] & /@ nonv]
-  ]
-];
-
-(* main layout function *)
-ClearAll[ComputeClassLayout];
-ComputeClassLayout[classes_Association, className_String] := Module[
-  {
-    cls,
-    dirPairs,            (* direct bases as {name, isVirt}? *)
-    directNames,         (* {Y1, Y2, \[Ellipsis]} *)
-    nonVirtualNames,
-    virtBaseNames,       (* all virtual bases, incl. indirect *)
-    rec,                 (* for recursion *)
-
-    (* layout\[Hyphen]building *)
-    subobjs = {}, offs = 0, maxAlign = 1,
-
-    (* vtable assembly *)
-    inheritedAll, inheritedUniq,
-    ownQual, ownNames, inheritedFilt,
-    allEntries,
-
-    (* helper to record a subobject *)
-    appendSubobj,
-
-    (* field area *)
-    fieldTypes, totalFieldSize, fieldAlign,
-    totalSize
-  },
-
-  (* sanity check *)
-  If[! KeyExistsQ[classes, className],
-    Message[ComputeClassLayout::noClass, className];
+  
+  If[!KeyExistsQ[classes, cls],
+    Message[ComputeClassLayout::noClass, cls];
     Return[$Failed]
   ];
 
-  cls = classes[className];
-  dirPairs       = cls["Bases"];
-  directNames    = dirPairs[[All, 1]];
-  nonVirtualNames= Cases[dirPairs, {b_, False} :> b];
-  virtBaseNames  = getVirtBases[classes, className];
-  rec            = ComputeClassLayout;  (* for recursive calls *)
-
-  (* subobject appender *)
-  appendSubobj[name_, kind_, sz_, al_, opts___] := Module[
-    {aOff = Ceiling[offs/al]*al, entry},
-    offs = aOff;
-    entry = <|
-      "Name"   -> name,
-      "Kind"   -> kind,
-      "Offset" -> offs,
-      "Size"   -> sz
-    |>;
-    Scan[(entry[#1[[1]]] = #1[[2]])&, {opts}];
-    AppendTo[subobjs, entry];
-    offs += sz;
-    maxAlign = Max[maxAlign, al];
+  rec = ComputeClassLayout[classes, #]&;
+  data = classes[cls];
+  bases = data["Bases"];
+  nv = Cases[bases, {b_, False} :> b];
+  virt = getVirtBases[classes, cls];
+  
+  (* ENHANCED: Helper function to resolve VTable entries with proper override semantics *)
+  resolveVTableEntries[targetClassName_String, baseClassName_String] := Module[{
+    baseClassFunctions, derivedClassFunctions, resolvedEntries = {}
+  },
+    (* Get base class function names (without class prefix) *)
+    baseClassFunctions = If[classes =!= None && KeyExistsQ[classes, baseClassName],
+      classes[baseClassName]["VTableEntries"],
+      {}
+    ];
+    
+    (* Get main derived class function names for override checking *)
+    derivedClassFunctions = If[classes =!= None && KeyExistsQ[classes, targetClassName],
+      classes[targetClassName]["VTableEntries"],
+      {}
+    ];
+    
+    (* For each function in the base class *)
+    Do[
+      Module[{baseFunctionName = baseClassFunctions[[i]], finalFunction, bestOverride},
+        (* Start with the base class version *)
+        bestOverride = baseClassName;
+        
+        (* Check if target derived class overrides this function *)
+        If[MemberQ[derivedClassFunctions, baseFunctionName],
+          bestOverride = targetClassName;
+        ];
+        
+        finalFunction = bestOverride <> "::" <> baseFunctionName;
+        AppendTo[resolvedEntries, finalFunction];
+      ]
+    , {i, Length[baseClassFunctions]}];
+    
+    resolvedEntries
   ];
-
-  (* 1) Build the VTableEntries by merging direct bases *)
-  inheritedAll = Flatten[
-    rec[classes, #]["VTableEntries"] & /@ directNames
+  
+  (* Helper to append a subobject with proper alignment *)
+  append[name_, kind_, sz_, al_, meta_:<||>] := Module[{o},
+    o = Ceiling[offs/al]*al;
+    AppendTo[layout,
+      Join[<|"Name"->name, "Kind"->kind, "Offset"->o, "Size"->sz, "Align"->al|>, meta]
+    ];
+    offs = o + sz; 
+    maxA = Max[maxA, al];
   ];
-  (* later bases override earlier *)
-  inheritedUniq = Reverse @ DeleteDuplicatesBy[
-    Reverse @ inheritedAll,
-    Last @ StringSplit[#, "::"] &
+  
+  (* Build virtual function table with proper overriding *)
+  inherited = Flatten[rec[#]["VTableEntries"] & /@ nv];
+  ownVT = (cls <> "::" <> #)& /@ data["VTableEntries"];
+  
+  (* Build final VTable order: derived functions first, then non-overridden inherited *)
+  ownFuncNames = Last@StringSplit[#, "::"]& /@ ownVT;
+  
+  (* Get inherited functions that are NOT overridden by this class *)
+  nonOverriddenInherited = Select[inherited, 
+    !MemberQ[ownFuncNames, Last@StringSplit[#, "::"]]&
   ];
-  (* qualify this class\[CloseCurlyQuote]s own methods *)
-  ownQual = Map[
-    className <> "::" <> # &,
-    Lookup[cls, "VTableEntries", {}]
+  
+  (* Final VTable: own functions first, then non-overridden inherited *)
+  allVT = Join[ownVT, nonOverriddenInherited];
+  
+  (* Add vptr slot if this class introduces virtual functions *)
+  baseHasVirtual = Length[inherited] > 0;
+  needsVptr = (Length[ownVT] > 0 && !baseHasVirtual) || (Length[allVT] > 0 && Length[nv] == 0);
+  
+  If[needsVptr,
+    (* All vptr slots should point to the main class's VTable *)
+    append["vptr", "Vptr", 8, 8,
+      <|"ClassOfVtable"->cls, "VTableEntries"->allVT|>]
   ];
-  ownNames = Last @ StringSplit[#, "::"] & /@ ownQual;
-  inheritedFilt = Select[
-    inheritedUniq,
-    ! MemberQ[ownNames, Last @ StringSplit[#, "::"]] &
+  
+  (* Add vbase slots for direct virtual inheritance *)
+  directVirtualBases = Cases[bases, {b_, True} :> b];
+  Scan[
+    append["vbase:"<>#, "VbaseSlot", 8, 8,
+      <|"IsVirtualBase"->True, "VBaseOf"->#|>] &,
+    directVirtualBases
   ];
-  allEntries = Join[ownQual, inheritedFilt];
-
-  (* 2) vptr slot *)
-  If[Length[allEntries] > 0,
-    appendSubobj[
-      "vptr", "Vptr", 8, 8,
-      "ClassOfVtable" -> className,
-      "VTableEntries" -> allEntries
+  
+  (* Add non-virtual base subobjects *)
+  Module[{baseIndex = 0},
+  Scan[
+    Function[b,
+        Module[{bl = rec[b], modifiedLayout, isPrimaryBase},
+          baseIndex++;
+          isPrimaryBase = (baseIndex == 1);  (* Only first non-virtual base is primary *)
+          
+          (* ENHANCED: Properly resolve VTable entries for base classes *)
+          modifiedLayout = If[isPrimaryBase,
+            (* Primary base: modify vptr to point to main class with main class VTable entries *)
+            bl["Layout"] /. 
+          (item_Association /; item["Kind"] === "Vptr") :> 
+                Join[item, <|"ClassOfVtable" -> cls, "VTableEntries" -> allVT|>],
+            (* Secondary bases: keep original vptr but resolve VTable entries correctly *)
+            bl["Layout"] /. 
+          (item_Association /; item["Kind"] === "Vptr") :> 
+                Join[item, <|"VTableEntries" -> resolveVTableEntries[cls, b]|>]
+          ];
+        
+        append[b, "NonVirtualBase", bl["TotalSize"], bl["MaxAlign"],
+          <|"Layout" -> modifiedLayout|>]
+      ]
+    ],
+    nv
     ];
   ];
-
-  (* 3) one vbase\[Hyphen]pointer per virtual base *)
-  Scan[
-    With[{b = #},
-      appendSubobj[
-        "vbase:" <> b, "VbaseSlot", 8, 8,
-        "IsVirtualBase" -> True,
-        "VBaseOf"       -> b
-      ]
-    ] &,
-    virtBaseNames
+  
+  (* Add this class's own fields *)
+  size = Total[typeSize /@ data["Fields"][[All,2]]];
+  align = If[data["Fields"] === {}, 1, Max[typeAlign /@ data["Fields"][[All,2]]]];
+  append[cls, "Class", size, align];
+  
+  (* Create virtual base layouts *)
+  vbLayouts = Table[
+    Module[{vb = rec[v], modifiedVbLayout},
+      (* ENHANCED: Fix nested vptr slots in virtual bases to point to main class with resolved VTable *)
+      modifiedVbLayout = vb["Layout"] /. 
+        (item_Association /; item["Kind"] === "Vptr") :> 
+          Join[item, <|"ClassOfVtable" -> cls, "VTableEntries" -> resolveVTableEntries[cls, v]|>];
+      
+      <|
+        "ClassName" -> v,
+        "Layout" -> modifiedVbLayout,
+        "TotalSize" -> vb["TotalSize"],
+        "MaxAlign" -> vb["MaxAlign"],
+        "VTableEntries" -> resolveVTableEntries[cls, v]  (* FIXED: Resolve VTable entries for virtual base *)
+      |>
+    ],
+    {v, virt}
   ];
-
-  (* 4) flatten each direct non-virtual base *)
-  Scan[
-    With[{b = #, sl = rec[classes, #]},
-      appendSubobj[
-        b, "NonVirtualBase",
-        sl["TotalSize"], sl["MaxAlign"]
-      ]
-    ] &,
-    nonVirtualNames
-  ];
-
-  (* 5) this class\[CloseCurlyQuote]s own field + method\[Hyphen]slot region *)
-  fieldTypes     = cls["Fields"][[All, 2]];
-  totalFieldSize = Total[typeSize /@ fieldTypes] + 8*Length[allEntries];
-  fieldAlign     = If[fieldTypes === {}, 1, Max[typeAlign /@ fieldTypes]];
-  appendSubobj[
-    className, "Class",
-    totalFieldSize,
-    Max[fieldAlign, 8]
-  ];
-
-  (* 6) actual virtual\[Hyphen]base subobject at end *)
-  Scan[
-    With[{b = #, sl = rec[classes, #]},
-      appendSubobj[
-        b, "VirtualBase",
-        sl["TotalSize"], sl["MaxAlign"],
-        "IsVirtualBase" -> True
-      ]
-    ] &,
-    virtBaseNames
-  ];
-
-  (* finalize total size & return *)
-  totalSize = Ceiling[offs/maxAlign]*maxAlign;
+  
   <|
-    "ClassName"     -> className,
-    "Subobjects"    -> subobjs,
-    "TotalSize"     -> totalSize,
-    "MaxAlign"      -> maxAlign,
-    "VTableEntries" -> allEntries
+    "ClassName" -> cls,
+    "Layout" -> layout,
+    "VirtualBases" -> vbLayouts,
+    "TotalSize" -> Ceiling[offs/maxA]*maxA,
+    "MaxAlign" -> maxA,
+    "VTableEntries" -> allVT
   |>
 ];
 
-
-
-ClearAll[DrawClassDiagram];
+(* --- COMPLETELY FIXED Drawing with perfect anchor system --- *)
+Clear[DrawClassDiagram];
 Options[DrawClassDiagram] = {
-  MaxObjectWidth -> 1000,  (* maximum width of the object bar in pixels *)
-  SlotHeight      -> 20,   (* height of each vtable slot in pixels *)
-  VTableWidth     -> 60,   (* width of the vtable panel in pixels *)
-  GapHeight       -> 10,   (* vertical gap between object and vtable in pixels *)
-  ArrowSize       -> 0.03  (* relative arrowhead size *)
+  UnitWidth -> 25,           (* Default: 25 pixels per memory slot *)
+  SlotHeight -> 15,          (* Default: 15 pixels slot height *)
+  VTableHeight -> 12,        (* Default: 12 pixels per vtable entry *)
+  PanelGap -> 10,            (* Default: 10 pixels between diagram panels *)
+  ColorFunctions -> True,    (* Default: Enable color coding for different element types *)
+  ArrowSize -> 0.01,         (* Default: 0.01 arrow head size *)
+  SeparateVTables -> True,   (* CHANGED: Always show separate VTables by default *)
+  MergeVTables -> False      (* NEW: Option to merge VTables with first vptr *)
 };
 
-DrawClassDiagram[
-  layout_Association,
-  opts : OptionsPattern[]
-] := Module[
+DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Module[
   {
-    subobjs    = layout["Subobjects"],
-    vtbl       = layout["VTableEntries"],
-    totalSize  = layout["TotalSize"],
-    (* pull options *)
-    maxOW      = OptionValue[MaxObjectWidth],
-    slotH      = OptionValue[SlotHeight],
-    vW         = OptionValue[VTableWidth],
-    gapH       = OptionValue[GapHeight],
-    aSz        = OptionValue[ArrowSize],
-    (* derived dims *)
-    nSlots, objW, scale, yObj,
-    ptr, ptrX
+    (* Data extraction *)
+    main = layout["Layout"],
+    vbs = layout["VirtualBases"],
+    vtables = layout["VTableEntries"],
+    mainClassName = layout["ClassName"],
+    
+    (* Options *)
+    U = OptionValue[UnitWidth],
+    H = OptionValue[SlotHeight],
+    vH = OptionValue[VTableHeight],
+    gap = OptionValue[PanelGap],
+    useColors = OptionValue[ColorFunctions],
+    arrowSize = OptionValue[ArrowSize],
+    separateVTables = OptionValue[SeparateVTables],
+    mergeVTables = OptionValue[MergeVTables],
+    
+    (* NEW: Multiple VTable system *)
+    vtableStructures = {},  (* List of {className, vtableEntries, position} *)
+    vtableAnchors = <||>,   (* Association: className -> {x, y} *)
+    
+    (* Layout dimensions *)
+    mainBarWidth, totalVTableWidth, totalVTableHeight, totalVbWidth,
+    mainY, vtableStartX, vtableY, vbY, totalWidth, totalHeight, minVTableY = 0,
+    
+    (* Graphics collections *)
+    graphics = {}, arrows = {},
+    
+    (* ENHANCED: Separate anchor system for multiple VTables *)
+    vptrAnchors = {},           (* List of {position, className} *)
+    vbaseAnchors = <||>, 
+    virtualBaseAnchors = <||>,
+    
+    (* Helper functions *)
+    getColor, drawSlot, drawMainBar, drawVTables, drawVirtualBases, collectVTableStructures, updateDimensions
   },
-
-  nSlots = Length[vtbl];
-
-  (* 1) Compute object-bar width (capped at MaxObjectWidth) *)
-  objW  = Min[maxOW, totalSize*slotH];
-  scale = objW/totalSize;                 (* pixels per \[OpenCurlyDoubleQuote]byte\[CloseCurlyDoubleQuote] *)
-  yObj  = nSlots*slotH + gapH;            (* y-coordinate of object bar *)
-
-  (* 2) Locate the vptr slot for arrow origin *)
-  ptr   = SelectFirst[subobjs, #["Kind"] === "Vptr"&, None];
-  ptrX  = If[ptr =!= None,
-            (ptr["Offset"] + ptr["Size"]/2)*scale,
-            objW/2
-          ];
-
-  Graphics[
-    {
-      (* \[HorizontalLine]\[HorizontalLine] Object bar \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
-      FaceForm[None], EdgeForm[Black],
-      (* outer rectangle *)
-      Rectangle[{0, yObj}, {objW, yObj + slotH}],
-      (* each subobject *)
-      Table[
-        {
-          EdgeForm[GrayLevel[0.7]], FaceForm[None],
-          Rectangle[
-            { sub["Offset"]*scale,         yObj},
-            {(sub["Offset"] + sub["Size"])*scale, yObj + slotH}
+  
+  (* Input validation *)
+  If[!AssociationQ[layout], Return[$Failed]];
+  If[main === {}, main = {}];
+  If[vbs === {}, vbs = {}];
+  If[vtables === {}, vtables = {}];
+  
+  (* Calculate layout dimensions *)
+  mainBarWidth = Length[main] * U;
+  
+  (* INITIAL: Set placeholder VTable dimensions - will be updated after collection *)
+  totalVTableWidth = 0;
+  totalVTableHeight = If[vtables === {}, 0, Length[vtables] * vH];
+  
+  totalVbWidth = If[vbs === {}, 0, Total[Max[80, Length[#["Layout"]] * U * 0.7] & /@ vbs] + If[Length[vbs] > 1, (Length[vbs] - 1)*gap, 0]];
+  
+  (* FIXED: Proper positioning - virtual bases at top, main in middle, VTables at bottom *)
+  vtableY = gap;  (* VTables at bottom (lowest Y) *)
+  mainY = vtableY + If[vtables === {}, 0, totalVTableHeight + gap];  (* Main bar above VTables *)
+  vbY = mainY + H + gap;  (* Virtual bases at top (highest Y) *)
+  
+  (* FIXED: VTable positioned to the right of main content area *)
+  vtableStartX = gap + mainBarWidth + gap;
+  
+  (* PLACEHOLDER: Calculate total dimensions - will be updated after VTable collection *)
+  totalWidth = gap + mainBarWidth + gap + totalVTableWidth + gap + totalVbWidth + gap;
+  totalHeight = gap + If[vbs === {}, 0, H + gap] + If[vtables === {}, 0, totalVTableHeight + gap] + H + gap;
+  
+  (* Color scheme for different element types *)
+  getColor[kind_] := Which[
+    !useColors, GrayLevel[0.95],
+    kind === "Vptr", RGBColor[1, 0.7, 0.7],          (* Salmon for vptr *)
+    kind === "VbaseSlot", RGBColor[0.6, 0.6, 1],     (* Blue for vbase slots *)
+    kind === "NonVirtualBase", RGBColor[1, 1, 0.9],  (* Very light yellow *)
+    kind === "Class", GrayLevel[0.8],                (* Light gray *)
+    True, White
+  ];
+  
+  (* COMPLETELY FIXED: Draw a single memory slot with perfect anchor registration *)
+  drawSlot[item_, x_, y_, width_] := Module[
+    {color = getColor[item["Kind"]], label, nestedGraphics = {}},
+    
+    (* Determine display label *)
+    label = Switch[item["Kind"],
+      "Vptr", "vptr",
+      "VbaseSlot", "vbase:" <> item["VBaseOf"],
+      _, item["Name"]
+    ];
+    
+    (* COMPLETELY FIXED: Simple anchor registration with AppendTo *)
+    Switch[item["Kind"],
+      "Vptr", 
+        AppendTo[vptrAnchors, {{x + width/2, y + H/2}, mainClassName}],
+      "VbaseSlot", 
+        Module[{className = item["VBaseOf"]},
+          If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+          AppendTo[vbaseAnchors[className], {x + width/2, y + H}];
+        ]
+    ];
+    
+    (* Handle nested layouts for base classes *)
+    If[item["Kind"] === "NonVirtualBase" && KeyExistsQ[item, "Layout"] && Length[item["Layout"]] > 0,
+      Module[{nestedLayout = item["Layout"], nestedWidth = width / Length[item["Layout"]], nestedX = x},
+        Do[
+          Module[{nestedItem = nestedLayout[[j]]},
+            (* COMPLETELY FIXED: Register nested anchors with correct class name *)
+            Switch[nestedItem["Kind"],
+              "Vptr", 
+                (* FIXED: Use ClassOfVtable from nested item, not base class name *)
+                Module[{targetClass = If[KeyExistsQ[nestedItem, "ClassOfVtable"], 
+                                       nestedItem["ClassOfVtable"], 
+                                       item["Name"]]},
+                  AppendTo[vptrAnchors, {{nestedX + nestedWidth/2, y + H/2}, targetClass}];
+                ],
+              "VbaseSlot", 
+                Module[{className = nestedItem["VBaseOf"]},
+                  If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+                  AppendTo[vbaseAnchors[className], {nestedX + nestedWidth/2, y + H}];
+                ]
+            ];
+            
+            (* Draw nested slot *)
+            AppendTo[nestedGraphics, {
+              {EdgeForm[{Black, Thickness[0.001]}], FaceForm[getColor[nestedItem["Kind"]]],
+               Rectangle[{nestedX, y + 2}, {nestedX + nestedWidth, y + H - 2}]},
+              Text[Switch[nestedItem["Kind"],
+                "Vptr", "vptr",
+                "VbaseSlot", "vbase:" <> nestedItem["VBaseOf"],
+                _, nestedItem["Name"]
+              ], 
+              {nestedX + nestedWidth/2, y + H/2},
+              BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+            }];
+            nestedX += nestedWidth;
           ],
-          Text[
-            sub["Name"],
-            { (sub["Offset"] + sub["Size"]/2)*scale, yObj + slotH/2 }
-          ]
-        },
-        {sub, subobjs}
-      ],
-
-      (* \[HorizontalLine]\[HorizontalLine] VTable panel \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
-      FaceForm[None], EdgeForm[Black],
-      (* outer rectangle *)
-      Rectangle[{0, 0}, {vW, nSlots*slotH}],
-      (* each slot & label *)
-      Table[
-        {
-          EdgeForm[Black], FaceForm[None],
-          Rectangle[
-            {0,              slotH*(nSlots - i)},
-            {vW,             slotH*(nSlots - i + 1)}
-          ],
-          Text[
-            vtbl[[i]],
-            {vW/2, slotH*(nSlots - i) + slotH/2}
-          ]
-        },
-        {i, nSlots}
-      ],
-
-      (* \[HorizontalLine]\[HorizontalLine] Vertical arrow from vptr \[RightArrow] vtable mid \[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine]\[HorizontalLine] *)
-      Arrowheads[aSz],
-      If[ptr =!= None,
-        Arrow[{
-          {ptrX,                yObj},
-          {ptrX,                slotH*nSlots},
-          {0.9*vW,              slotH*nSlots}   (* small horizontal kick *)
-        }],
-        {}
+          {j, Length[nestedLayout]}
+        ]
       ]
-    },
-    PlotRange   -> {{0, Max[objW, vW]}, {0, yObj + slotH}},
-    ImageSize   -> {Max[objW, vW], Automatic},
-    Axes        -> False,
-    Frame       -> False
+    ];
+    
+    (* Draw main slot rectangle and label *)
+    {
+      {EdgeForm[{Black, Thickness[0.002]}], FaceForm[color],
+       Rectangle[{x, y}, {x + width, y + H}]},
+      Text[label, {x + width/2, y + H/2},
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}],
+      nestedGraphics
+    }
+  ];
+  
+  (* Draw main object memory bar *)
+  drawMainBar[] := Module[{x = gap},
+    AppendTo[graphics, {
+      {EdgeForm[{Black, Thickness[0.003]}], FaceForm[None],
+       Rectangle[{gap, mainY}, {gap + mainBarWidth, mainY + H}]},
+      Text["Object: " <> mainClassName, 
+           {gap + mainBarWidth/2, mainY + H + 15},
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+    }];
+    
+    Do[
+      AppendTo[graphics, drawSlot[main[[i]], x, mainY, U]];
+      x += U;
+    , {i, Length[main]}]
+  ];
+  
+  (* ENHANCED: Draw multiple VTables *)
+  drawVTables[] := Module[{},
+    If[Length[vtableStructures] == 0, Return[]];
+    
+    (* Draw each VTable *)
+    Do[
+      Module[{vtableStruct = vtableStructures[[i]], className, vtableEntries, pos, 
+              vtableWidth, vtableHeight, vtableX, vtableY},
+        className = vtableStruct["ClassName"];
+        vtableEntries = vtableStruct["VTableEntries"];
+        pos = vtableStruct["Position"];
+        vtableX = pos[[1]];
+        vtableY = pos[[2]];
+        vtableWidth = Max[60, Max[StringLength /@ vtableEntries] * 3];
+        vtableHeight = vtableStruct["Height"];  (* Use stored height for cascading *)
+        
+        (* Draw VTable border and label *)
+    AppendTo[graphics, {
+      {EdgeForm[{Black, Thickness[0.002]}], FaceForm[White],
+       Rectangle[{vtableX, vtableY}, {vtableX + vtableWidth, vtableY + vtableHeight}]},
+          Text["VTable: " <> className, 
+               {vtableX + vtableWidth/2, vtableY + vtableHeight + 5},
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+    }];
+    
+        (* Draw VTable entries from bottom to top *)
+    Do[
+      AppendTo[graphics, {
+        {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[White],
+             Rectangle[{vtableX, vtableY + (Length[vtableEntries]-j)*vH}, 
+                      {vtableX + vtableWidth, vtableY + (Length[vtableEntries]-j+1)*vH}]},
+            Text[vtableEntries[[j]], 
+                 {vtableX + vtableWidth/2, vtableY + (Length[vtableEntries]-j)*vH + vH/2},
+             BaseStyle -> {FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]
+      }]
+        , {j, Length[vtableEntries]}];
+      ]
+    , {i, Length[vtableStructures]}];
+  ];
+  
+  (* ENHANCED: Collect VTable structures for ALL base classes with virtual functions *)
+  collectVTableStructures[] := Module[{
+    allBases = {},           (* List of all base classes with their VTable info *)
+    shouldMerge = False,     (* Whether to merge first base VTable *)
+    firstNonVirtualBase = None,
+    currentY = vtableY,
+    currentX = vtableStartX, (* FIXED: Use currentX for horizontal positioning *)
+    
+    (* ENHANCED: Complete function overriding logic *)
+    resolveVTableEntries,
+    
+    (* ENHANCED: Extract class info from layout when classes parameter is None *)
+    extractedClasses = If[classes === None, <||>, classes]
+  },
+    
+    (* SIMPLIFIED: Direct VTable extraction when classes is None *)
+    If[classes === None,
+      (* Simple mode: extract VTables directly from layout *)
+      
+      (* Add main class if it has virtual functions *)
+      If[Length[vtables] > 0,
+        AppendTo[allBases, <|
+          "ClassName" -> mainClassName,
+          "VTableEntries" -> vtables,
+          "IsVirtual" -> False,
+          "IsPrimary" -> True
+        |>];
+      ];
+      
+      (* Add virtual bases *)
+      Do[
+        Module[{vb = vbs[[i]], vtableEntries},
+          vtableEntries = vb["VTableEntries"];
+          If[Length[vtableEntries] > 0,
+            AppendTo[allBases, <|
+              "ClassName" -> vb["ClassName"],
+              "VTableEntries" -> vtableEntries,
+              "IsVirtual" -> True,
+              "IsPrimary" -> False
+            |>];
+          ];
+        ];
+      , {i, Length[vbs]}];
+      
+      (* Add non-virtual bases *)
+      Module[{baseIndex = 0},
+        Do[
+          Module[{item = main[[i]]},
+            If[item["Kind"] === "NonVirtualBase",
+              baseIndex++;
+              Module[{baseClassName = item["Name"], isPrimary = (baseIndex == 1)},
+                If[!isPrimary && KeyExistsQ[item, "Layout"],
+                  Module[{baseLayout = item["Layout"], hasVptr = False, extractedVTableEntries = {}},
+                    Do[
+                      If[baseLayout[[j]]["Kind"] === "Vptr",
+                        hasVptr = True;
+                        If[KeyExistsQ[baseLayout[[j]], "VTableEntries"],
+                          extractedVTableEntries = baseLayout[[j]]["VTableEntries"];
+                        ];
+                        Break[];
+                      ];
+                    , {j, Length[baseLayout]}];
+                    
+                    If[hasVptr && Length[extractedVTableEntries] > 0,
+                      AppendTo[allBases, <|
+                        "ClassName" -> baseClassName,
+                        "VTableEntries" -> extractedVTableEntries,
+                        "IsVirtual" -> False,
+                        "IsPrimary" -> False
+                      |>];
+                    ];
+                  ];
+                ];
+              ];
+            ];
+          ];
+        , {i, Length[main]}];
+      ];
+      
+    , (* COMPLEX MODE: Use resolveVTableEntries function when classes is provided *)
+      
+      (* Helper function to resolve which functions are actually called *)
+      resolveVTableEntries[className_String] := Module[{
+        classVTableEntries, inheritedEntries, finalEntries
+      },
+        (* Original logic when classes parameter is provided *)
+        (* Get this class's virtual functions *)
+        classVTableEntries = If[extractedClasses =!= None && KeyExistsQ[extractedClasses, className],
+          (className <> "::" <> #)& /@ extractedClasses[className]["VTableEntries"],
+          {}
+        ];
+        
+        (* ENHANCED: Complete function overriding logic *)
+        If[className === mainClassName,
+          (* For the main class, return its own VTable entries *)
+          classVTableEntries,
+          (* For base classes, resolve which version of each function would actually be called *)
+          Module[{
+            baseClassFunctions, derivedClassFunctions, resolvedEntries = {},
+            allDerivedClasses, inheritanceChain
+          },
+            (* Get base class function names (without class prefix) *)
+            baseClassFunctions = If[extractedClasses =!= None && KeyExistsQ[extractedClasses, className],
+              extractedClasses[className]["VTableEntries"],
+              {}
+            ];
+            
+            (* Get main derived class function names for override checking *)
+            derivedClassFunctions = If[extractedClasses =!= None && KeyExistsQ[extractedClasses, mainClassName],
+              extractedClasses[mainClassName]["VTableEntries"],
+              {}
+            ];
+            
+            (* Get all intermediate classes that might override functions *)
+            allDerivedClasses = If[extractedClasses =!= None, Keys[extractedClasses], {}];
+            
+            (* For each function in the base class VTable *)
+            Do[
+              Module[{baseFunctionName = baseClassFunctions[[i]], finalFunction, bestOverride},
+                (* Start with the base class version *)
+                bestOverride = className;
+                
+                (* Check if main derived class overrides this function *)
+                If[MemberQ[derivedClassFunctions, baseFunctionName],
+                  bestOverride = mainClassName;
+                ];
+                
+                (* FUTURE: Could add logic to check intermediate classes in inheritance chain *)
+                (* For now, check direct inheritance path: base -> main *)
+                
+                finalFunction = bestOverride <> "::" <> baseFunctionName;
+                AppendTo[resolvedEntries, finalFunction];
+              ]
+            , {i, Length[baseClassFunctions]}];
+            
+            resolvedEntries
+          ]
+        ]
+      ];
+      
+      (* 1. COLLECT ALL CLASSES WITH VIRTUAL FUNCTIONS *)
+      
+      (* Add main class if it has virtual functions *)
+      If[Length[vtables] > 0,
+        AppendTo[allBases, <|
+          "ClassName" -> mainClassName,
+          "VTableEntries" -> vtables,
+          "IsVirtual" -> False,
+          "IsPrimary" -> True  (* FIXED: Main class is always primary *)
+        |>];
+      ];
+      
+      (* Add virtual bases - VTableEntries are directly available *)
+      Do[
+        Module[{vb = vbs[[i]], vtableEntries},
+          vtableEntries = vb["VTableEntries"];
+          If[Length[vtableEntries] > 0,
+            AppendTo[allBases, <|
+              "ClassName" -> vb["ClassName"],
+              "VTableEntries" -> vtableEntries,
+              "IsVirtual" -> True,
+              "IsPrimary" -> False
+            |>];
+          ];
+        ]
+      , {i, Length[vbs]}];
+      
+      (* ENHANCED: Extract VTable info from layout structure when classes not available *)
+      Module[{baseIndex = 0, primaryBaseName = None},
+        (* Identify all non-virtual bases from main layout *)
+        Do[
+          Module[{item = main[[i]]},
+            If[item["Kind"] === "NonVirtualBase",
+              baseIndex++;
+              Module[{baseClassName = item["Name"], isPrimary = (baseIndex == 1)},
+                (* Track primary base name *)
+                If[isPrimary, primaryBaseName = baseClassName];
+                
+                (* ENHANCED: Add secondary bases (not primary) that have vptrs *)
+                If[!isPrimary && KeyExistsQ[item, "Layout"],
+                  Module[{baseLayout = item["Layout"], hasVptr = False, extractedVTableEntries = {}},
+                    (* Check if this base has a vptr and extract VTable entries *)
+                    Do[
+                      If[baseLayout[[j]]["Kind"] === "Vptr",
+                        hasVptr = True;
+                        (* Extract VTable entries from the vptr slot itself *)
+                        If[KeyExistsQ[baseLayout[[j]], "VTableEntries"],
+                          extractedVTableEntries = baseLayout[[j]]["VTableEntries"];
+                        ];
+                        Break[];
+                      ];
+                    , {j, Length[baseLayout]}];
+                    
+                    (* Add secondary base with its own VTable using extracted entries *)
+                    If[hasVptr && !MemberQ[allBases[[All, "ClassName"]], baseClassName],
+                      If[Length[extractedVTableEntries] > 0,
+                        AppendTo[allBases, <|
+                          "ClassName" -> baseClassName,
+                          "VTableEntries" -> extractedVTableEntries,
+                          "IsVirtual" -> False,
+                          "IsPrimary" -> False
+                        |>];
+                      ];
+                    ];
+                  ];
+                ];
+              ];
+            ];
+          ]
+        , {i, Length[main]}];
+      ];
+    ];
+    
+    (* 2. DETERMINE MERGE LOGIC - Always separate for correct C++ behavior *)
+    shouldMerge = False;
+    
+    (* 3. CREATE VTABLES FOR COLLECTED CLASSES *)
+    If[separateVTables && !shouldMerge,
+      (* SEPARATE MODE: Individual VTables for classes that need them *)
+      
+      (* Create VTable for each class with cascading Y positioning *)
+      Do[
+        Module[{baseInfo = allBases[[i]], vtableEntries, vtableWidth, vtableHeight, newY},
+          vtableEntries = baseInfo["VTableEntries"];
+          vtableWidth = Max[60, Max[StringLength /@ vtableEntries] * 3];
+          vtableHeight = Length[vtableEntries] * vH;
+          
+          (* CASCADING Y CALCULATION: prev_y - prev_vtable_height - gap *)
+          If[Length[vtableStructures] > 0,
+            Module[{prevVTable = vtableStructures[[-1]]},
+              newY = prevVTable["Position"][[2]] - prevVTable["Height"] - gap;
+            ],
+            newY = currentY;  (* First VTable uses initial Y *)
+          ];
+          
+          AppendTo[vtableStructures, <|
+            "ClassName" -> baseInfo["ClassName"],
+            "VTableEntries" -> vtableEntries,
+            "Position" -> {currentX, newY},
+            "Height" -> vtableHeight  (* Store height for next cascade *)
+          |>];
+          vtableAnchors[baseInfo["ClassName"]] = {currentX, newY};
+          currentX += vtableWidth + gap;  (* Move right for next VTable *)
+        ]
+      , {i, Length[allBases]}];
+      
+    , (* MERGED MODE: Single VTable with merged entries *)
+      
+      If[Length[vtables] > 0,
+        Module[{vtableHeight = Length[vtables] * vH},
+          AppendTo[vtableStructures, <|
+            "ClassName" -> mainClassName,
+            "VTableEntries" -> vtables,
+            "Position" -> {vtableStartX, vtableY},
+            "Height" -> vtableHeight
+          |>];
+          vtableAnchors[mainClassName] = {vtableStartX, vtableY};
+          
+          (* In merged mode, all base vptrs should point to main class VTable *)
+          Do[
+            vtableAnchors[allBases[[i]]["ClassName"]] = {vtableStartX, vtableY};
+          , {i, Length[allBases]}];
+        ];
+      ];
+    ];
+  ];
+  
+  (* ENHANCED: Draw virtual base panels with UPWARD CASCADING - "stairway up" *)
+  drawVirtualBases[] := Module[{
+    x = gap, 
+    currentVbY = vbY,  (* Start at base Y position *)
+    vbStructures = {}  (* Track VB positions and heights for cascade *)
+  },
+    Do[
+      Module[{vb = vbs[[i]], vbLayout, vbBarWidth, vbX, vbHeight, newVbY},
+        (* Safely extract layout *)
+        vbLayout = If[AssociationQ[vb] && KeyExistsQ[vb, "Layout"], vb["Layout"], {}];
+        
+        (* Calculate dimensions *)
+        vbBarWidth = Length[vbLayout] * U;
+        vbHeight = H;  (* Virtual base height (single row) *)
+        vbX = gap + mainBarWidth + gap + totalVTableWidth + gap + x;
+        
+        (* UPWARD CASCADING Y CALCULATION: prev_y + prev_height + gap *)
+        If[Length[vbStructures] > 0,
+          Module[{prevVb = vbStructures[[-1]]},
+            newVbY = prevVb["Position"][[2]] + prevVb["Height"] + gap;
+          ],
+          newVbY = currentVbY;  (* First virtual base uses initial Y *)
+        ];
+        
+        (* Store VB structure info for next cascade *)
+        AppendTo[vbStructures, <|
+          "ClassName" -> vb["ClassName"],
+          "Position" -> {vbX, newVbY},
+          "Width" -> vbBarWidth,
+          "Height" -> vbHeight
+        |>];
+        
+        (* Store virtual base anchor with cascaded position *)
+        virtualBaseAnchors[vb["ClassName"]] = <|
+          "Position" -> {vbX + vbBarWidth/2, newVbY}, 
+          "Width" -> vbBarWidth, 
+          "LeftEdge" -> vbX
+        |>;
+        
+        (* Draw outer border at cascaded position *)
+        AppendTo[graphics, {
+          {EdgeForm[{Blue, Dashed, Thickness[0.003]}], FaceForm[None],
+           Rectangle[{vbX, newVbY}, {vbX + vbBarWidth, newVbY + H}]},
+          Text["Virtual Base: " <> vb["ClassName"],
+               {vbX + vbBarWidth/2, newVbY - 12},
+               BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, 
+                            FontColor -> Blue, FontWeight -> Bold}]
+        }];
+        
+        (* Draw each slot at cascaded position *)
+        Module[{currentX = vbX},
+          Do[
+            Module[{slotItem, color, label, targetClass},
+              (* Safely extract slot item *)
+              slotItem = If[j <= Length[vbLayout] && AssociationQ[vbLayout[[j]]], 
+                           vbLayout[[j]], 
+                           <|"Name" -> "INVALID", "Kind" -> "Unknown"|>];
+              
+              (* Safely determine which class this vptr should point to *)
+              targetClass = If[KeyExistsQ[slotItem, "ClassOfVtable"], 
+                             slotItem["ClassOfVtable"], 
+                             vb["ClassName"]];
+              
+              (* Get color and label safely *)
+              color = getColor[Lookup[slotItem, "Kind", "Unknown"]];
+              label = Switch[Lookup[slotItem, "Kind", "Unknown"],
+                "Vptr", "vptr",
+                "VbaseSlot", "vbase:" <> Lookup[slotItem, "VBaseOf", "UNKNOWN"],
+                _, Lookup[slotItem, "Name", "UNKNOWN"]
+              ];
+              
+              (* Register anchors with cascaded Y position *)
+              Switch[Lookup[slotItem, "Kind", "Unknown"],
+                  "Vptr", 
+                  (* CRITICAL FIX: Virtual base vptrs should point to their own VTable, not main class *)
+                  Module[{actualTargetClass},
+                    (* For virtual bases, the target should be the virtual base itself *)
+                    actualTargetClass = If[KeyExistsQ[slotItem, "ClassOfVtable"] && 
+                                         slotItem["ClassOfVtable"] === mainClassName &&
+                                         KeyExistsQ[vtableAnchors, vb["ClassName"]],
+                      vb["ClassName"],  (* Virtual base points to its own VTable *)
+                      If[KeyExistsQ[slotItem, "ClassOfVtable"], 
+                        slotItem["ClassOfVtable"], 
+                        vb["ClassName"]]
+                    ];
+                    AppendTo[vptrAnchors, {{currentX + U/2, newVbY + H/2}, actualTargetClass}];
+                  ],
+                  "VbaseSlot", 
+                  Module[{className = Lookup[slotItem, "VBaseOf", "UNKNOWN"]},
+                    If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
+                    AppendTo[vbaseAnchors[className], {currentX + U/2, newVbY + H}];
+                  ]
+              ];
+              
+              (* Draw the slot at cascaded position *)
+                AppendTo[graphics, {
+                {EdgeForm[{Black, Thickness[0.002]}], FaceForm[color],
+                 Rectangle[{currentX, newVbY}, {currentX + U, newVbY + H}]},
+                Text[label, {currentX + U/2, newVbY + H/2},
+                  BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+                }];
+            ];
+            currentX += U;
+          , {j, Length[vbLayout]}];
+        ];
+        
+        x += vbBarWidth + gap;  (* Move right for next virtual base *)
+      ]
+    , {i, Length[vbs]}]
+  ];
+  
+  (* ENHANCED: Draw connection arrows for multiple VTables *)
+  drawArrows[] := Module[{},
+    (* 1) ENHANCED: Black L-shaped arrows from vptr to corresponding VTable *)
+    If[Length[vptrAnchors] > 0,
+      Do[
+        Module[{anchorData = vptrAnchors[[i]], src, targetClass, tgt, adjustedSrc, adjustedTgt, midPt, 
+                vtableStruct, vtableWidth, vtableHeight, vtablePos},
+          src = anchorData[[1]];
+          targetClass = anchorData[[2]];
+          
+          (* Find the corresponding VTable structure to get dimensions *)
+          vtableStruct = FirstCase[vtableStructures, 
+            s_Association /; s["ClassName"] === targetClass :> s, 
+            Missing[]];
+          
+          If[!MissingQ[vtableStruct],
+            (* Calculate VTable dimensions *)
+            vtableWidth = Max[60, Max[StringLength /@ vtableStruct["VTableEntries"]] * 3];
+            vtableHeight = vtableStruct["Height"];
+            vtablePos = vtableStruct["Position"];
+            
+            (* CORRECTED INTELLIGENT ARROW POSITIONING: upper left if src_x > tgt_x, upper right otherwise *)
+            adjustedSrc = {src[[1]], src[[2]] - H/2};  (* Top of vptr slot *)
+            adjustedTgt = If[src[[1]] > vtablePos[[1]], 
+              {vtablePos[[1]] + vtableWidth, vtablePos[[2]] + vtableHeight},   (* Upper right corner *)
+              {vtablePos[[1]], vtablePos[[2]] + vtableHeight}        (* Upper left corner *)
+            ];
+            midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
+          
+            AppendTo[arrows, {
+              Black, Thickness[0.003], Arrowheads[{0, 0.03}],
+              Arrow[{adjustedSrc, midPt, adjustedTgt}]
+            }];
+          ];
+        ],
+        {i, Length[vptrAnchors]}
+      ];
+    ];
+    
+    (* 2) ENHANCED: Blue L-shaped arrows from vbase slots to virtual bases *)
+    KeyValueMap[
+      Function[{className, vbaseSrcs},
+        If[KeyExistsQ[virtualBaseAnchors, className],
+          Module[{tgtInfo = virtualBaseAnchors[className], tgt, vbWidth, leftEdge},
+            tgt = tgtInfo["Position"];
+            vbWidth = tgtInfo["Width"];
+            leftEdge = tgtInfo["LeftEdge"];
+            
+            Do[
+              Module[{src, adjustedSrc, adjustedTgt, midPt},
+                src = vbaseSrcs[[i]];
+                
+                (* CORRECTED INTELLIGENT ARROW POSITIONING WITH LEFT OFFSET: shifted left by vbWidth *)
+                adjustedSrc = {src[[1]], src[[2]]};  (* Bottom of vbase slot *)
+                adjustedTgt = If[src[[1]] > leftEdge, 
+                  {leftEdge - vbWidth, tgt[[2]] + H},              (* Upper left corner shifted left by vbWidth *)
+                  {leftEdge, tgt[[2]] + H}                         (* Upper right corner shifted left by vbWidth *)
+                ];
+                midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
+                    
+                AppendTo[arrows, {
+                  Blue, Thickness[0.003], Arrowheads[{0, 0.03}],
+                  Arrow[{adjustedSrc, midPt, adjustedTgt}]
+                }];
+              ],
+              {i, Length[vbaseSrcs]}
+            ];
+          ]
+        ]
+      ],
+      vbaseAnchors
+    ];
+  ];
+  
+  (* UPDATE: Calculate actual dimensions including cascaded virtual bases AND all VTables *)
+  updateDimensions[] := Module[{actualVTableWidth = 0, maxVbY = vbY, maxVTableY = 0, localMinVTableY = 0, calculatedTotalWidth},
+    (* Calculate actual total width of all VTables *)
+    If[Length[vtableStructures] > 0,
+      Module[{minX = Infinity, maxX = -Infinity},
+        Do[
+          Module[{vtableStruct = vtableStructures[[i]], pos, vtableWidth},
+            pos = vtableStruct["Position"];
+            vtableWidth = Max[60, Max[StringLength /@ vtableStruct["VTableEntries"]] * 3];
+            minX = Min[minX, pos[[1]]];
+            maxX = Max[maxX, pos[[1]] + vtableWidth];
+          ]
+        , {i, Length[vtableStructures]}];
+        actualVTableWidth = maxX - minX;
+      ];
+    ];
+    
+    (* FIXED: Calculate Y range of all VTables for proper plot range *)
+    If[Length[vtableStructures] > 0,
+      Do[
+        Module[{vtableStruct = vtableStructures[[i]], pos, vtableHeight},
+          pos = vtableStruct["Position"];
+          vtableHeight = vtableStruct["Height"];
+          localMinVTableY = Min[localMinVTableY, pos[[2]]];                    (* Lowest VTable Y *)
+          maxVTableY = Max[maxVTableY, pos[[2]] + vtableHeight];     (* Highest VTable Y *)
+        ]
+      , {i, Length[vtableStructures]}];
+    ];
+    
+    (* Calculate maximum Y position of cascaded virtual bases *)
+    If[Length[vbs] > 0,
+      Module[{currentVbY = vbY, x = gap},
+        Do[
+          Module[{vb = vbs[[i]], vbLayout, vbHeight},
+            vbLayout = If[AssociationQ[vb] && KeyExistsQ[vb, "Layout"], vb["Layout"], {}];
+            vbHeight = H;
+            
+            (* Calculate cascaded Y position *)
+            If[i > 1,
+              currentVbY = currentVbY + vbHeight + gap;
+            ];
+            
+            (* Track maximum Y *)
+            maxVbY = Max[maxVbY, currentVbY + vbHeight];
+          ]
+        , {i, Length[vbs]}];
+      ];
+    ];
+    
+    (* CRITICAL FIX: Calculate total width properly *)
+    calculatedTotalWidth = gap + mainBarWidth + gap + actualVTableWidth + gap + totalVbWidth + gap;
+    
+    (* Update outer scope variables - CRITICAL FIX *)
+    minVTableY = localMinVTableY;
+    totalVTableWidth = actualVTableWidth;
+    totalWidth = calculatedTotalWidth;
+    
+    (* FIXED: Include VTable Y range in total height calculation *)
+    totalHeight = Max[
+      gap + If[vbs === {}, 0, maxVbY - vbY + gap] + H + gap,              (* VB height *)
+      gap + maxVTableY + gap,                                             (* Top VTable *)
+      Abs[minVTableY] + maxVTableY + 2*gap                               (* Full VTable range *)
+    ];
+  ];
+  
+  (* Build the complete diagram *)
+  collectVTableStructures[];
+  updateDimensions[];  (* FIXED: Update dimensions after VTable collection *)
+  drawVirtualBases[];
+  drawMainBar[];
+  drawVTables[];
+  drawArrows[];
+  
+  (* Create base graphics object with proper bounds *)
+  Show[
+    Graphics[graphics, Background -> White],
+    Graphics[arrows],
+    PlotRange -> {{-20, totalWidth + 20}, {minVTableY - 50, totalHeight + 20}},
+    Background -> White,
+    Axes -> False,
+    Frame -> False,
+    ImagePadding -> 10
   ]
 ];
 
-
-
-(*(**)
-(* Interactive helpers *)
-ParseAndDrawClassLayout[] := Module[{file, cls, names, choice, lay},
-  file = SystemDialogInput["FileOpen"];
-  If[ !StringQ[file] || !FileExistsQ[file], Return[$Canceled] ];
-  cls = ParseCppToClasses[file];
-  If[ cls === $Failed, Return[$Failed] ];
-  names = Keys[cls];
-  If[ names === {}, Message[ParseAndDrawClassLayout::noClasses]; Return[$Failed] ];
-  choice = ChoiceDialog["Select class:", Thread[names -> names]];
-  If[ !StringQ[choice], Return[$Canceled] ];
-  lay = ComputeClassLayout[cls, choice]["Subobjects"];
-  DrawClassLayout[<|"Subobjects"->lay, "TotalSize"->ComputeClassLayout[cls, choice]["TotalSize"], "MaxAlign"->ComputeClassLayout[cls, choice]["MaxAlign"]|>]
+(* --- Helper function for rescaling diagrams --- *)
+RescaleClassDiagram[diagram_Graphics, width_:800, height_:600] := Show[
+  diagram,
+  PlotRange -> All,              (* Use full data range of all primitives *)
+  PlotRangePadding -> 1,      (* No extra margin around range *)
+  ImagePadding -> None,          (* No extra white border *)
+  AspectRatio -> Automatic,
+  ImageSize -> {width, height}   (* Custom size *)
 ];
 
-ParseAndDrawClassLayout[path_String, className_String] := Module[{cls, res},
+(* --- Interactive helper functions --- *)
+Clear[ParseAndDrawClassLayout];
+ParseAndDrawClassLayout[] := Module[{file, cls, choice, layout},
+  file = SystemDialogInput["FileOpen", WindowTitle -> "Select C++ Header File"];
+  If[!StringQ[file], Return[$Canceled]];
+  
+  cls = ParseCppToClasses[file];
+  If[cls === $Failed, Return[$Failed]];
+  
+  If[Length[Keys[cls]] == 0,
+    Message[ParseAndDrawClassLayout::noclasses, file];
+    Return[$Failed]
+  ];
+  
+  choice = ChoiceDialog["Select class to visualize", Thread[Keys[cls] -> Keys[cls]]];
+  If[!StringQ[choice], Return[$Canceled]];
+  
+  layout = ComputeClassLayout[cls, choice];
+  If[layout === $Failed, Return[$Failed]];
+  
+  DrawClassDiagram[layout, SeparateVTables -> True, cls]
+];
+
+ParseAndDrawClassLayout::noclasses = "No classes found in file `1`.";
+
+Clear[ParseAndDrawClassLayoutPath];
+ParseAndDrawClassLayoutPath[path_String] := Module[{cls, layout, choice },
   cls = ParseCppToClasses[path];
-  If[ cls === $Failed, Return[$Failed] ];
-  res = ComputeClassLayout[cls, className];
-  DrawClassLayout[<|"Subobjects"->res["Subobjects"], "TotalSize"->res["TotalSize"], "MaxAlign"->res["MaxAlign"]|>]
-];*)
+  If[cls === $Failed, Return[$Failed]];
+  
+  If[Length[Keys[cls]] == 0,
+    Message[ParseAndDrawClassLayoutPath::noclasses, path];
+    Return[$Failed]
+  ];
+  
+  choice = ChoiceDialog["Select class to visualize", Thread[Keys[cls] -> Keys[cls]]];
+  If[!StringQ[choice], Return[$Canceled]];
+  
+  layout = ComputeClassLayout[cls, choice];
+  If[layout === $Failed, Return[$Failed]];
+  
+  DrawClassDiagram[layout, SeparateVTables -> True, cls]
+];
 
+ParseAndDrawClassLayoutPath[path_String, className_String] := Module[{cls, layout},
+  cls = ParseCppToClasses[path]; 
+  If[cls === $Failed, Return[$Failed]];
+  
+  layout = ComputeClassLayout[cls, className];
+  If[layout === $Failed, Return[$Failed]];
+  
+  DrawClassDiagram[layout, SeparateVTables -> True, cls]
+];
 
-End[];  (* `Private` *)
+ParseAndDrawClassLayoutPath::noclasses = "No classes found in file `1`.";
 
+(* --- Simple wrapper for easy usage --- *)
+DrawClassDiagramSimple[layout_] := DrawClassDiagram[layout, SeparateVTables -> True, None];
+
+(* --- Alternative entry point that always shows separate VTables --- *)
+DrawLayout[layout_] := DrawClassDiagram[layout, SeparateVTables -> True, None];
+
+End[]; 
 EndPackage[];
-
