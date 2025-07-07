@@ -6,6 +6,10 @@
   Parses C++ headers via clang AST and creates publication-quality memory layout diagrams
 *)
 
+(* Clear any existing symbols to prevent shadowing *)
+Quiet[Remove["CppClassLayoutParser`*"]];
+Quiet[Remove["ParseCppToClasses", "ComputeClassLayout", "DrawClassDiagram", "ParseAndDrawClassLayout", "ParseAndDrawClassLayoutPath", "RescaleClassDiagram"]];
+
 BeginPackage["CppClassLayoutParser`"];
 
 ParseCppToClasses::usage =
@@ -194,12 +198,12 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
       <|"ClassOfVtable"->cls, "VTableEntries"->allVT|>]
   ];
   
-  (* Add vbase slots for direct virtual inheritance *)
-  directVirtualBases = Cases[bases, {b_, True} :> b];
+  (* Add vbase slots for ALL virtual bases (direct and indirect) *)
+  (* FIXED: Create vbase slots for all virtual bases, not just direct ones *)
   Scan[
     append["vbase:"<>#, "VbaseSlot", 8, 8,
       <|"IsVirtualBase"->True, "VBaseOf"->#|>] &,
-    directVirtualBases
+    virt  (* Use all virtual bases from getVirtBases, not just direct ones *)
   ];
   
   (* Add non-virtual base subobjects *)
@@ -237,18 +241,18 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   
   (* Create virtual base layouts *)
   vbLayouts = Table[
-    Module[{vb = rec[v], modifiedVbLayout},
-      (* ENHANCED: Fix nested vptr slots in virtual bases to point to main class with resolved VTable *)
-      modifiedVbLayout = vb["Layout"] /. 
-        (item_Association /; item["Kind"] === "Vptr") :> 
-          Join[item, <|"ClassOfVtable" -> cls, "VTableEntries" -> resolveVTableEntries[cls, v]|>];
+    Module[{vbLayout},
+      (* FIXED: Treat virtual bases exactly like regular classes - compute their complete layout *)
+      vbLayout = ComputeClassLayout[classes, v];
       
+      (* Return the complete layout for this virtual base *)
       <|
         "ClassName" -> v,
-        "Layout" -> modifiedVbLayout,
-        "TotalSize" -> vb["TotalSize"],
-        "MaxAlign" -> vb["MaxAlign"],
-        "VTableEntries" -> resolveVTableEntries[cls, v]  (* FIXED: Resolve VTable entries for virtual base *)
+        "Layout" -> vbLayout["Layout"],
+        "TotalSize" -> Max[vbLayout["TotalSize"], 1],  (* FIXED: Ensure minimum size of 1 for empty classes *)
+        "MaxAlign" -> vbLayout["MaxAlign"],
+        "VTableEntries" -> vbLayout["VTableEntries"],
+        "VirtualBases" -> vbLayout["VirtualBases"]  (* ADDED: Include nested virtual bases *)
       |>
     ],
     {v, virt}
@@ -295,6 +299,10 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     separateVTables = OptionValue[SeparateVTables],
     mergeVTables = OptionValue[MergeVTables],
     
+    (* --- UNIFORM BLOCK SIZE FOR ALL SLOTS AND CLASSES --- *)
+    uniformBlockWidth = 100,
+    Uscaled,
+    
     (* NEW: Multiple VTable system *)
     vtableStructures = {},  (* List of {className, vtableEntries, position} *)
     vtableAnchors = <||>,   (* Association: className -> {x, y} *)
@@ -312,23 +320,51 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     virtualBaseAnchors = <||>,
     
     (* Helper functions *)
-    getColor, drawSlot, drawMainBar, drawVTables, drawVirtualBases, collectVTableStructures, updateDimensions
+    getColor, drawSlot, drawMainBar, drawVTables, drawVirtualBases, collectVTableStructures, updateDimensions,
+  
+    (* Dynamic scaling: set a max total width for main object and virtual base panels *)
+    maxBarWidth, mainNumSlots
   },
   
-  (* Input validation *)
-  If[!AssociationQ[layout], Return[$Failed]];
-  If[main === {}, main = {}];
-  If[vbs === {}, vbs = {}];
-  If[vtables === {}, vtables = {}];
+  (* SET UNIFORM BLOCK SIZE AT THE BEGINNING *)
+  Uscaled = uniformBlockWidth;
   
-  (* Calculate layout dimensions *)
-  mainBarWidth = Length[main] * U;
+  (* --- STRICT SLOT-TYPE-BASED SIZING (ABSOLUTE UNIFORMITY) --- *)
+  vptrWidth = 60;
+  vbaseWidth = 80;
+  fieldWidth = 80;
+  classBlockWidth = 120;
+  defaultWidth = 100;
+
+  getSlotWidth[item_] := Switch[item["Kind"],
+    "Vptr", vptrWidth,
+    "VbaseSlot", vbaseWidth,
+    "Field", fieldWidth,
+    "NonVirtualBase" | "Class", 
+      Module[{nested = If[KeyExistsQ[item, "Layout"], item["Layout"], {}]},
+        If[Length[nested] > 0, Total[getSlotWidth[#] & /@ nested], classBlockWidth]
+      ],
+    _, defaultWidth
+  ];
+  
+  (* Dynamic scaling calculations go here *)
+  maxBarWidth = 800;
+  mainNumSlots = Max[1, Length[main]];
+  mainBarWidth = Total[getSlotWidth[#] & /@ main];
   
   (* INITIAL: Set placeholder VTable dimensions - will be updated after collection *)
   totalVTableWidth = 0;
   totalVTableHeight = If[vtables === {}, 0, Length[vtables] * vH];
   
-  totalVbWidth = If[vbs === {}, 0, Total[Max[80, Length[#["Layout"]] * U * 0.7] & /@ vbs] + If[Length[vbs] > 1, (Length[vbs] - 1)*gap, 0]];
+  (* ENHANCED: Calculate virtual base width using dynamic slot widths *)
+  totalVbWidth = If[vbs === {}, 0, 
+    Total[Module[{vbLayout = #["Layout"]}, 
+      If[Length[vbLayout] > 0, 
+        Total[getSlotWidth[#] & /@ vbLayout], 
+        classBlockWidth
+      ]
+    ] & /@ vbs] + If[Length[vbs] > 1, (Length[vbs] - 1)*gap, 0]
+  ];
   
   (* FIXED: Proper positioning - virtual bases at top, main in middle, VTables at bottom *)
   vtableY = gap;  (* VTables at bottom (lowest Y) *)
@@ -352,82 +388,65 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     True, White
   ];
   
-  (* COMPLETELY FIXED: Draw a single memory slot with perfect anchor registration *)
-  drawSlot[item_, x_, y_, width_] := Module[
-    {color = getColor[item["Kind"]], label, nestedGraphics = {}},
+  (* FIXED: Draw uniform block but show internal structure for subobjects, with correct width *)
+  drawSlot[item_, x_, y_, width_:Automatic] := Module[
+    {color = getColor[item["Kind"]], label, nestedGraphics = {}, actualWidth},
     
-    (* Determine display label *)
     label = Switch[item["Kind"],
       "Vptr", "vptr",
       "VbaseSlot", "vbase:" <> item["VBaseOf"],
       _, item["Name"]
     ];
     
-    (* COMPLETELY FIXED: Simple anchor registration with AppendTo *)
+    (* Register anchors for arrows *)
     Switch[item["Kind"],
       "Vptr", 
-        AppendTo[vptrAnchors, {{x + width/2, y + H/2}, mainClassName}],
+        Module[{targetClass = If[KeyExistsQ[item, "ClassOfVtable"], item["ClassOfVtable"], mainClassName]},
+          AppendTo[vptrAnchors, {{x + getSlotWidth[item]/2, y + H/2}, targetClass}]
+        ],
       "VbaseSlot", 
         Module[{className = item["VBaseOf"]},
           If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
-          AppendTo[vbaseAnchors[className], {x + width/2, y + H}];
+          AppendTo[vbaseAnchors[className], {x + getSlotWidth[item]/2, y + H}];
         ]
     ];
     
-    (* Handle nested layouts for base classes *)
-    If[item["Kind"] === "NonVirtualBase" && KeyExistsQ[item, "Layout"] && Length[item["Layout"]] > 0,
-      Module[{nestedLayout = item["Layout"], nestedWidth = width / Length[item["Layout"]], nestedX = x},
-        Do[
-          Module[{nestedItem = nestedLayout[[j]]},
-            (* COMPLETELY FIXED: Register nested anchors with correct class name *)
-            Switch[nestedItem["Kind"],
-              "Vptr", 
-                (* FIXED: Use ClassOfVtable from nested item, not base class name *)
-                Module[{targetClass = If[KeyExistsQ[nestedItem, "ClassOfVtable"], 
-                                       nestedItem["ClassOfVtable"], 
-                                       item["Name"]]},
-                  AppendTo[vptrAnchors, {{nestedX + nestedWidth/2, y + H/2}, targetClass}];
-                ],
-              "VbaseSlot", 
-                Module[{className = nestedItem["VBaseOf"]},
-                  If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
-                  AppendTo[vbaseAnchors[className], {nestedX + nestedWidth/2, y + H}];
-                ]
-            ];
-            
-            (* Draw nested slot *)
-            AppendTo[nestedGraphics, {
-              {EdgeForm[{Black, Thickness[0.001]}], FaceForm[getColor[nestedItem["Kind"]]],
-               Rectangle[{nestedX, y + 2}, {nestedX + nestedWidth, y + H - 2}]},
-              Text[Switch[nestedItem["Kind"],
-                "Vptr", "vptr",
-                "VbaseSlot", "vbase:" <> nestedItem["VBaseOf"],
-                _, nestedItem["Name"]
-              ], 
-              {nestedX + nestedWidth/2, y + H/2},
+    If[(item["Kind"] === "NonVirtualBase" || item["Kind"] === "Class") && KeyExistsQ[item, "Layout"] && Length[item["Layout"]] > 0,
+      Module[{nestedLayout = item["Layout"], subX = x, subWidthList},
+        subWidthList = getSlotWidth /@ nestedLayout;
+        actualWidth = Total[subWidthList];
+        (* Draw the outer rectangle for the subobject at the correct width *)
+        AppendTo[nestedGraphics, {
+          {EdgeForm[{Black, Thickness[0.0015]}], FaceForm[color],
+           Rectangle[{x, y}, {x + actualWidth, y + H}]},
+          Text[label, {x + actualWidth/2, y + H/2},
               BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
-            }];
-            nestedX += nestedWidth;
-          ],
-          {j, Length[nestedLayout]}
-        ]
+        }];
+        (* Recursively draw the nested layout, each at its fixed width *)
+        Do[
+          Module[{nestedItem = nestedLayout[[j]], slotW = subWidthList[[j]]},
+            AppendTo[nestedGraphics, drawSlot[nestedItem, subX, y, slotW]];
+            subX += slotW;
+          ];
+        , {j, Length[nestedLayout]}];
+        Return[nestedGraphics];
       ]
     ];
     
-    (* Draw main slot rectangle and label *)
+    (* Default: draw as a single uniform block *)
+    actualWidth = If[width === Automatic, getSlotWidth[item], width];
     {
-      {EdgeForm[{Black, Thickness[0.002]}], FaceForm[color],
-       Rectangle[{x, y}, {x + width, y + H}]},
-      Text[label, {x + width/2, y + H/2},
-           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}],
-      nestedGraphics
+      {EdgeForm[{Black, Thickness[0.0015]}], FaceForm[color],
+       Rectangle[{x, y}, {x + actualWidth, y + H}]},
+      Text[label, {x + actualWidth/2, y + H/2},
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
     }
   ];
   
   (* Draw main object memory bar *)
   drawMainBar[] := Module[{x = gap},
     AppendTo[graphics, {
-      {EdgeForm[{Black, Thickness[0.003]}], FaceForm[None],
+      {EdgeForm[{Black, Thickness[0.0015]}], FaceForm[None],
        Rectangle[{gap, mainY}, {gap + mainBarWidth, mainY + H}]},
       Text["Object: " <> mainClassName, 
            {gap + mainBarWidth/2, mainY + H + 15},
@@ -435,8 +454,10 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     }];
     
     Do[
-      AppendTo[graphics, drawSlot[main[[i]], x, mainY, U]];
-      x += U;
+      Module[{slotWidth = getSlotWidth[main[[i]]]},
+        AppendTo[graphics, drawSlot[main[[i]], x, mainY, slotWidth]];
+        x += slotWidth;
+      ]
     , {i, Length[main]}]
   ];
   
@@ -747,19 +768,48 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     ];
   ];
   
-  (* ENHANCED: Draw virtual base panels with UPWARD CASCADING - "stairway up" *)
+  (* ENHANCED: Helper function to recursively collect all virtual bases *)
+  flattenAllVirtualBases[vbsList_] := Module[{allVbs = {}, processed = {}},
+    (* Recursive function to collect virtual bases *)
+    Module[{collectVBs},
+      collectVBs[vbList_] := Do[
+        Module[{vb = vbList[[i]]},
+          If[!MemberQ[processed, vb["ClassName"]],
+            AppendTo[processed, vb["ClassName"]];
+            AppendTo[allVbs, vb];
+            (* Recursively process nested virtual bases *)
+            If[KeyExistsQ[vb, "VirtualBases"] && Length[vb["VirtualBases"]] > 0,
+              collectVBs[vb["VirtualBases"]];
+            ];
+          ];
+        ]
+      , {i, Length[vbList]}];
+      
+      collectVBs[vbsList];
+    ];
+    allVbs
+  ];
+  
+  (* ENHANCED: Draw virtual base panels with detailed slot display *)
   drawVirtualBases[] := Module[{
     x = gap, 
     currentVbY = vbY,  (* Start at base Y position *)
-    vbStructures = {}  (* Track VB positions and heights for cascade *)
+    vbStructures = {},  (* Track VB positions and heights for cascade *)
+    allVirtualBases    (* Flattened list of all virtual bases *)
   },
+    (* FIXED: Get all virtual bases recursively *)
+    allVirtualBases = flattenAllVirtualBases[vbs];
+    
     Do[
-      Module[{vb = vbs[[i]], vbLayout, vbBarWidth, vbX, vbHeight, newVbY},
+      Module[{vb = allVirtualBases[[i]], vbLayout, vbBarWidth, vbX, vbHeight, newVbY, currentX},
         (* Safely extract layout *)
         vbLayout = If[AssociationQ[vb] && KeyExistsQ[vb, "Layout"], vb["Layout"], {}];
         
-        (* Calculate dimensions *)
-        vbBarWidth = Length[vbLayout] * U;
+        (* FIXED: Use slot-type-based width for virtual bases based on content *)
+        vbBarWidth = If[Length[vbLayout] > 0, 
+          Total[getSlotWidth[#] & /@ vbLayout], 
+          classBlockWidth
+        ];
         vbHeight = H;  (* Virtual base height (single row) *)
         vbX = gap + mainBarWidth + gap + totalVTableWidth + gap + x;
         
@@ -788,7 +838,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         
         (* Draw outer border at cascaded position *)
         AppendTo[graphics, {
-          {EdgeForm[{Blue, Dashed, Thickness[0.003]}], FaceForm[None],
+          {EdgeForm[{Blue, Dashed, Thickness[0.0015]}], FaceForm[None],
            Rectangle[{vbX, newVbY}, {vbX + vbBarWidth, newVbY + H}]},
           Text["Virtual Base: " <> vb["ClassName"],
                {vbX + vbBarWidth/2, newVbY - 12},
@@ -796,66 +846,18 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
                             FontColor -> Blue, FontWeight -> Bold}]
         }];
         
-        (* Draw each slot at cascaded position *)
-        Module[{currentX = vbX},
-          Do[
-            Module[{slotItem, color, label, targetClass},
-              (* Safely extract slot item *)
-              slotItem = If[j <= Length[vbLayout] && AssociationQ[vbLayout[[j]]], 
-                           vbLayout[[j]], 
-                           <|"Name" -> "INVALID", "Kind" -> "Unknown"|>];
-              
-              (* Safely determine which class this vptr should point to *)
-              targetClass = If[KeyExistsQ[slotItem, "ClassOfVtable"], 
-                             slotItem["ClassOfVtable"], 
-                             vb["ClassName"]];
-              
-              (* Get color and label safely *)
-              color = getColor[Lookup[slotItem, "Kind", "Unknown"]];
-              label = Switch[Lookup[slotItem, "Kind", "Unknown"],
-                "Vptr", "vptr",
-                "VbaseSlot", "vbase:" <> Lookup[slotItem, "VBaseOf", "UNKNOWN"],
-                _, Lookup[slotItem, "Name", "UNKNOWN"]
-              ];
-              
-              (* Register anchors with cascaded Y position *)
-              Switch[Lookup[slotItem, "Kind", "Unknown"],
-                  "Vptr", 
-                  (* CRITICAL FIX: Virtual base vptrs should point to their own VTable, not main class *)
-                  Module[{actualTargetClass},
-                    (* For virtual bases, the target should be the virtual base itself *)
-                    actualTargetClass = If[KeyExistsQ[slotItem, "ClassOfVtable"] && 
-                                         slotItem["ClassOfVtable"] === mainClassName &&
-                                         KeyExistsQ[vtableAnchors, vb["ClassName"]],
-                      vb["ClassName"],  (* Virtual base points to its own VTable *)
-                      If[KeyExistsQ[slotItem, "ClassOfVtable"], 
-                        slotItem["ClassOfVtable"], 
-                        vb["ClassName"]]
-                    ];
-                    AppendTo[vptrAnchors, {{currentX + U/2, newVbY + H/2}, actualTargetClass}];
-                  ],
-                  "VbaseSlot", 
-                  Module[{className = Lookup[slotItem, "VBaseOf", "UNKNOWN"]},
-                    If[!KeyExistsQ[vbaseAnchors, className], vbaseAnchors[className] = {}];
-                    AppendTo[vbaseAnchors[className], {currentX + U/2, newVbY + H}];
-                  ]
-              ];
-              
-              (* Draw the slot at cascaded position *)
-                AppendTo[graphics, {
-                {EdgeForm[{Black, Thickness[0.002]}], FaceForm[color],
-                 Rectangle[{currentX, newVbY}, {currentX + U, newVbY + H}]},
-                Text[label, {currentX + U/2, newVbY + H/2},
-                  BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
-                }];
-            ];
-            currentX += U;
-          , {j, Length[vbLayout]}];
-        ];
+        (* Draw each slot with slot-type-based width using drawSlot to register anchors *)
+        currentX = vbX;
+        Do[
+          Module[{slotWidth = getSlotWidth[vbLayout[[j]]]},
+            AppendTo[graphics, drawSlot[vbLayout[[j]], currentX, newVbY, slotWidth]];
+            currentX += slotWidth;
+          ]
+        , {j, Length[vbLayout]}];
         
         x += vbBarWidth + gap;  (* Move right for next virtual base *)
       ]
-    , {i, Length[vbs]}]
+    , {i, Length[allVirtualBases]}]
   ];
   
   (* ENHANCED: Draw connection arrows for multiple VTables *)
@@ -1005,11 +1007,12 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
   drawVTables[];
   drawArrows[];
   
-  (* Create base graphics object with proper bounds *)
   Show[
     Graphics[graphics, Background -> White],
     Graphics[arrows],
-    PlotRange -> {{-20, totalWidth + 20}, {minVTableY - 50, totalHeight + 20}},
+    PlotRange -> All,
+    PlotRangePadding -> Scaled[0.08],
+    ImageSize -> {mainBarWidth + totalVbWidth + 400, 800},
     Background -> White,
     Axes -> False,
     Frame -> False,
@@ -1050,15 +1053,12 @@ ParseAndDrawClassLayout[] := Module[{file, cls, choice, layout},
   DrawClassDiagram[layout, SeparateVTables -> True, cls]
 ];
 
-ParseAndDrawClassLayout::noclasses = "No classes found in file `1`.";
-
-Clear[ParseAndDrawClassLayoutPath];
-ParseAndDrawClassLayoutPath[path_String] := Module[{cls, layout, choice },
+ParseAndDrawClassLayout[path_String] := Module[{cls, layout, choice },
   cls = ParseCppToClasses[path];
   If[cls === $Failed, Return[$Failed]];
   
   If[Length[Keys[cls]] == 0,
-    Message[ParseAndDrawClassLayoutPath::noclasses, path];
+    Message[ParseAndDrawClassLayout::noclasses, path];
     Return[$Failed]
   ];
   
@@ -1071,7 +1071,7 @@ ParseAndDrawClassLayoutPath[path_String] := Module[{cls, layout, choice },
   DrawClassDiagram[layout, SeparateVTables -> True, cls]
 ];
 
-ParseAndDrawClassLayoutPath[path_String, className_String] := Module[{cls, layout},
+ParseAndDrawClassLayout[path_String, className_String] := Module[{cls, layout},
   cls = ParseCppToClasses[path]; 
   If[cls === $Failed, Return[$Failed]];
   
@@ -1081,7 +1081,7 @@ ParseAndDrawClassLayoutPath[path_String, className_String] := Module[{cls, layou
   DrawClassDiagram[layout, SeparateVTables -> True, cls]
 ];
 
-ParseAndDrawClassLayoutPath::noclasses = "No classes found in file `1`.";
+ParseAndDrawClassLayout::noclasses = "No classes found in file `1`.";
 
 (* --- Simple wrapper for easy usage --- *)
 DrawClassDiagramSimple[layout_] := DrawClassDiagram[layout, SeparateVTables -> True, None];
