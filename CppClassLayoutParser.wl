@@ -39,14 +39,11 @@ typeSize["double"] := 8;
 typeSize[_]        := 8;  (* Default to pointer size *)
 typeAlign[t_]      := typeSize[t];
 
-(* --- Collect virtual bases recursively --- *)
-getVirtBases[classes_, cls_] := Module[{rec, bs, v, nv},
-  rec = getVirtBases[classes, #]&;
+(* --- Collect direct virtual bases only --- *)
+getDirectVirtBases[classes_, cls_] := Module[{bs},
   If[!KeyExistsQ[classes, cls], Return[{}]];
   bs = Lookup[classes[cls], "Bases", {}];
-  v  = Cases[bs, {b_, True} :> b];   (* Virtual bases *)
-  nv = Cases[bs, {b_, False} :> b];  (* Non-virtual bases *)
-  DeleteDuplicates@Join[v, Flatten[rec /@ nv]]
+  Cases[bs, {b_, True} :> b]  (* Only direct virtual bases *)
 ];
 
 (* --- Parse C++ via clang AST dump --- *)
@@ -109,12 +106,20 @@ ParseCppToClasses::parsefail = "Failed to parse C++ file `1`. Check that clang i
 Clear[ComputeClassLayout];
 ComputeClassLayout::noClass = "Class `1` not found in the parsed classes.";
 
+(* --- Restore recursive collection of all virtual bases for panel display --- *)
+getVirtBases[classes_, cls_] := Module[{rec, bs, v, nv},
+  rec = getVirtBases[classes, #]&;
+  If[!KeyExistsQ[classes, cls], Return[{}]];
+  bs = Lookup[classes[cls], "Bases", {}];
+  v  = Cases[bs, {b_, True} :> b];   (* Virtual bases *)
+  nv = Cases[bs, {b_, False} :> b];  (* Non-virtual bases *)
+  DeleteDuplicates@Join[v, Flatten[rec /@ nv]]
+];
+
 ComputeClassLayout[classes_Association, cls_String] := Module[
   {rec, data, bases, nv, virt, layout = {}, offs = 0, maxA = 1,
    append, inherited, ownVT, allVT, vbLayouts, size, align, vtableEntries,
-   
-   (* ENHANCED: Add proper virtual function dispatch resolution *)
-   resolveVTableEntries
+   resolveVTableEntries, directVirtBases, allVirtBases
   },
   
   If[!KeyExistsQ[classes, cls],
@@ -126,7 +131,8 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   data = classes[cls];
   bases = data["Bases"];
   nv = Cases[bases, {b_, False} :> b];
-  virt = getVirtBases[classes, cls];
+  directVirtBases = getDirectVirtBases[classes, cls];  (* Only direct virtual bases for vbase slots *)
+  allVirtBases = getVirtBases[classes, cls];            (* All virtual bases for panel display *)
   
   (* ENHANCED: Helper function to resolve VTable entries with proper override semantics *)
   resolveVTableEntries[targetClassName_String, baseClassName_String] := Module[{
@@ -198,12 +204,11 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
       <|"ClassOfVtable"->cls, "VTableEntries"->allVT|>]
   ];
   
-  (* Add vbase slots for ALL virtual bases (direct and indirect) *)
-  (* FIXED: Create vbase slots for all virtual bases, not just direct ones *)
+  (* Add vbase slots for ONLY direct virtual bases *)
   Scan[
     append["vbase:"<>#, "VbaseSlot", 8, 8,
       <|"IsVirtualBase"->True, "VBaseOf"->#|>] &,
-    virt  (* Use all virtual bases from getVirtBases, not just direct ones *)
+    directVirtBases
   ];
   
   (* Add non-virtual base subobjects *)
@@ -239,23 +244,20 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   align = If[data["Fields"] === {}, 1, Max[typeAlign /@ data["Fields"][[All,2]]]];
   append[cls, "Class", size, align];
   
-  (* Create virtual base layouts *)
+  (* Create virtual base layouts recursively for all virtual bases *)
   vbLayouts = Table[
     Module[{vbLayout},
-      (* FIXED: Treat virtual bases exactly like regular classes - compute their complete layout *)
       vbLayout = ComputeClassLayout[classes, v];
-      
-      (* Return the complete layout for this virtual base *)
       <|
         "ClassName" -> v,
         "Layout" -> vbLayout["Layout"],
-        "TotalSize" -> Max[vbLayout["TotalSize"], 1],  (* FIXED: Ensure minimum size of 1 for empty classes *)
+        "TotalSize" -> Max[vbLayout["TotalSize"], 1],
         "MaxAlign" -> vbLayout["MaxAlign"],
         "VTableEntries" -> vbLayout["VTableEntries"],
-        "VirtualBases" -> vbLayout["VirtualBases"]  (* ADDED: Include nested virtual bases *)
+        "VirtualBases" -> vbLayout["VirtualBases"]
       |>
     ],
-    {v, virt}
+    {v, allVirtBases}
   ];
   
   <|
