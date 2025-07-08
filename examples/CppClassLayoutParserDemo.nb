@@ -1,0 +1,1312 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     58872,       1304]
+NotebookOptionsPosition[     52527,       1182]
+NotebookOutlinePosition[     52976,       1199]
+CellTagsIndexPosition[     52933,       1196]
+WindowTitle->CppClassLayoutParser Demo
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["C++ Class Layout Parser - Comprehensive Inheritance Testing", "Title",ExpressionUUID->"e948933d-961e-ff40-8fec-7ab3d65431a3"],
+
+Cell["\<\
+This notebook demonstrates the C++ Class Layout Parser tool by testing \
+various inheritance patterns and visualizing memory layouts. The parser uses \
+clang's JSON AST via CppClassLayoutParser.wl.\
+\>", "Text",ExpressionUUID->"7d403d64-584a-684b-92e6-d3d94128afb9"],
+
+Cell[CellGroupData[{
+
+Cell["Setup and Initialization", "Section",ExpressionUUID->"cddcf1c2-8261-4546-a714-efb0ab69b96e"],
+
+Cell["\<\
+(* Clear definitions and load parser *)
+Remove[\"CppClassLayoutParser`*\"];
+SetDirectory[NotebookDirectory[]];
+<< \"../CppClassLayoutParser.wl\"\
+\>", "Input",
+ CellLabel->"In[20]:=",ExpressionUUID->"c919bc9e-2265-664b-a565-dbc6a3faa9c5"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test Overview Table", "Section",
+ CellChangeTimes->{{3.960882022204569*^9, 
+  3.9608820233310432`*^9}},ExpressionUUID->"47beccce-a8f8-374e-8928-\
+a8983b83ae8f"],
+
+Cell[BoxData[
+ TagBox[GridBox[{
+    {
+     StyleBox["\"\<Test #\>\"",
+      StripOnInput->False,
+      FontSize->14,
+      FontWeight->Bold], 
+     StyleBox["\"\<Pattern\>\"",
+      StripOnInput->False,
+      FontSize->14,
+      FontWeight->Bold], 
+     StyleBox["\"\<Description\>\"",
+      StripOnInput->False,
+      FontSize->14,
+      FontWeight->Bold], 
+     StyleBox["\"\<File\>\"",
+      StripOnInput->False,
+      FontSize->14,
+      FontWeight->Bold], 
+     StyleBox["\"\<Target Class\>\"",
+      StripOnInput->False,
+      FontSize->14,
+      FontWeight->Bold]},
+    {"\"\<Test 1\>\"", "\"\<Simple Single Class\>\"", "\"\<Basic VTable \
+creation\>\"", "\"\<simple_single_class.hpp\>\"", "\"\<SimpleClass\>\""},
+    {"\"\<Test 2\>\"", "\"\<Single Inheritance\>\"", "\"\<Basic inheritance \
+hierarchy\>\"", "\"\<single_inheritance.hpp\>\"", "\"\<Derived\>\""},
+    {"\"\<Test 3\>\"", "\"\<Multiple Inheritance\>\"", "\"\<Multiple base \
+classes\>\"", "\"\<multiple_inheritance.hpp\>\"", "\"\<MultipleDerived\>\""},
+    {"\"\<Test 4\>\"", "\"\<Virtual Inheritance\>\"", "\"\<Shared virtual \
+bases\>\"", "\"\<virtual_inheritance.hpp\>\"", "\"\<VirtualMultiple\>\""},
+    {"\"\<Test 5\>\"", "\"\<Diamond Inheritance\>\"", "\"\<Classic diamond \
+problem\>\"", "\"\<diamond_inheritance.hpp\>\"", "\"\<DiamondBottom\>\""},
+    {"\"\<Test 6\>\"", "\"\<Complex Inheritance\>\"", "\"\<Mixed \
+virtual/non-virtual\>\"", "\"\<complex_inheritance.hpp\>\"", "\"\<Z\>\""},
+    {"\"\<Test 7\>\"", "\"\<Deep Inheritance\>\"", "\"\<5-level \
+hierarchy\>\"", "\"\<deep_inheritance.hpp\>\"", "\"\<Level5\>\""},
+    {"\"\<Test 8\>\"", "\"\<Interface Inheritance\>\"", "\"\<Abstract classes\
+\>\"", "\"\<interface_inheritance.hpp\>\"", "\"\<MultiInterface\>\""},
+    {"\"\<Test 9\>\"", "\"\<Template Inheritance\>\"", "\"\<Template \
+instantiation\>\"", "\"\<template_inheritance.hpp\>\"", \
+"\"\<DoubleDerived\>\""},
+    {"\"\<Test 10\>\"", "\"\<Extreme Complexity\>\"", "\"\<Multiple virtual \
+bases & deep hier.\>\"", "\"\<extreme_complexity.hpp\>\"", \
+"\"\<UltimateComplex\>\""}
+   },
+   AutoDelete->False,
+   GridBoxAlignment->{"Columns" -> {{Left}}, "Rows" -> {{Center}}},
+   GridBoxBackground->{"Columns" -> {{None}}, "Rows" -> {
+       RGBColor[0.87, 0.94, 1], 
+       GrayLevel[0.85]}},
+   GridBoxFrame->{"Columns" -> {{True}}, "Rows" -> {{True}}},
+   GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}},
+   GridBoxSpacings->{"Columns" -> {{2}}, "Rows" -> {{1}}}],
+  "Grid"]], "Input",ExpressionUUID->"5a19e12e-2683-f149-99a2-17cf644f2bcc"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 1: Simple Single Class", "Section",ExpressionUUID->"58bb6045-4db5-fd4b-b6ed-f88a8fe7adc4"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Basic VTable creation *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"simple_single_class.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]simple_single_class.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"simple_single_class.hpp\", \"SimpleClass\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]SimpleClass\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[24]:=",ExpressionUUID->"8ca7713a-7ea0-e745-bdb5-3d7e23fb9c92"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]simple_single_class.hpp\[CloseCurlyDoubleQuote] \
+===\"\>"], "Print",
+ CellChangeTimes->{3.960882027925314*^9},
+ CellLabel->
+  "During evaluation of \
+In[24]:=",ExpressionUUID->"e0cd4543-3e0a-a840-b418-f8ffd3c9c895"],
+
+Cell[BoxData["\<\"// Simple single class with virtual functions\\nclass \
+SimpleClass {\\npublic:\\n    virtual void method1() {}\\n    virtual void \
+method2() {}\\n    virtual ~SimpleClass() {}\\n    \\nprivate:\\n    int \
+data1;\\n    double data2;\\n}; \"\>"], "Print",
+ CellChangeTimes->{3.9608820279313126`*^9},
+ CellLabel->
+  "During evaluation of \
+In[24]:=",ExpressionUUID->"17c78659-bb4a-884e-92d1-ac5d106557e7"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]SimpleClass\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.960882028011463*^9},
+ CellLabel->
+  "During evaluation of \
+In[24]:=",ExpressionUUID->"1a8c3e33-4993-2643-aaae-222519ddff7e"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 44}, {190, 59}]}, 
+     InsetBox["\<\"Object: SimpleClass\"\>", {100, 74},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{10, 44}, {70, 59}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{40, Rational[103, 2]}, {40, 51.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{70, 44}, {190, 59}]}, 
+     InsetBox["\<\"SimpleClass\"\>", 
+      NCache[{130, Rational[103, 2]}, {130, 51.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{200, 10}, {260, 34}]}, 
+     InsetBox["\<\"VTable: SimpleClass\"\>", {230, 39},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{200, 22}, {260, 34}]}, 
+     InsetBox["\<\"SimpleClass::method1\"\>", {230, 28},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{200, 10}, {260, 22}]}, 
+     InsetBox["\<\"SimpleClass::method2\"\>", {230, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, 
+   {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+    ArrowBox[{{40, 44}, {40, 34}, {200, 34}}]}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{580, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.9608820280302296`*^9},
+ CellLabel->
+  "During evaluation of \
+In[24]:=",ExpressionUUID->"0727a0ff-13a3-f746-9e2a-5187203fd179"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 2: Single Inheritance", "Section",ExpressionUUID->"cea14842-e58d-5f48-8074-1983bfe834b4"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Basic inheritance hierarchy *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"single_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]single_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"single_inheritance.hpp\", \"Derived\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]Derived\[CloseCurlyDoubleQuote] \
+===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[34]:=",ExpressionUUID->"c4a5ec3b-2ddc-1846-95e3-324055562834"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]single_inheritance.hpp\[CloseCurlyDoubleQuote] \
+===\"\>"], "Print",
+ CellChangeTimes->{3.960882038964304*^9},
+ CellLabel->
+  "During evaluation of \
+In[34]:=",ExpressionUUID->"fdde91f9-9658-6c47-96cc-b6819eeb72a0"],
+
+Cell[BoxData["\<\"// Single inheritance example\\nclass Base {\\npublic:\\n   \
+ virtual void baseMethod() {}\\n    virtual ~Base() {}\\n    \\nprivate:\\n   \
+ int baseData;\\n};\\n\\nclass Derived : public Base {\\npublic:\\n    \
+virtual void derivedMethod() {}\\n    virtual void baseMethod() override \
+{}\\n    virtual ~Derived() {}\\n    \\nprivate:\\n    double \
+derivedData;\\n}; \"\>"], "Print",
+ CellChangeTimes->{3.960882038968302*^9},
+ CellLabel->
+  "During evaluation of \
+In[34]:=",ExpressionUUID->"5aef6e94-a7f5-3142-a420-bd2d6e0a16d9"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]Derived\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.9608820390381737`*^9},
+ CellLabel->
+  "During evaluation of \
+In[34]:=",ExpressionUUID->"f57d453d-d384-0d44-be63-1081a1aad075"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 44}, {310, 59}]}, 
+     InsetBox["\<\"Object: Derived\"\>", {160, 74},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 44}, {190, 59}]}, 
+      InsetBox["\<\"Base\"\>", NCache[{100, Rational[103, 2]}, {100, 51.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{10, 44}, {70, 59}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{40, Rational[103, 2]}, {40, 51.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{70, 44}, {190, 59}]}, 
+      InsetBox["\<\"Base\"\>", NCache[{130, Rational[103, 2]}, {130, 51.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{190, 44}, {310, 59}]}, 
+     InsetBox["\<\"Derived\"\>", NCache[{250, Rational[103, 2]}, {250, 51.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{320, 10}, {386, 34}]}, 
+     InsetBox["\<\"VTable: Derived\"\>", {353, 39},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{320, 22}, {386, 34}]}, 
+     InsetBox["\<\"Derived::derivedMethod\"\>", {353, 28},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{320, 10}, {386, 22}]}, 
+     InsetBox["\<\"Derived::baseMethod\"\>", {353, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, 
+   {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+    ArrowBox[{{40, 44}, {40, 34}, {320, 34}}]}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{700, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.960882039054386*^9},
+ CellLabel->
+  "During evaluation of \
+In[34]:=",ExpressionUUID->"7731a340-0834-324a-935e-76f5af745d89"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 3: Multiple Inheritance", "Section",ExpressionUUID->"c8000c3c-b88c-e449-91cc-9c13c8fb83f2"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Multiple base classes *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"multiple_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]multiple_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"multiple_inheritance.hpp\", \
+\"MultipleDerived\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]MultipleDerived\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[44]:=",ExpressionUUID->"85f346af-39f7-d144-9115-d4b9645aa7db"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]multiple_inheritance.hpp\[CloseCurlyDoubleQuote] ===\"\
+\>"], "Print",
+ CellChangeTimes->{3.9608820420391216`*^9},
+ CellLabel->
+  "During evaluation of \
+In[44]:=",ExpressionUUID->"17514a5e-ecd7-cc4a-bcff-7ec63da1e65a"],
+
+Cell[BoxData["\<\"// Multiple inheritance example\\nclass Base1 \
+{\\npublic:\\n    virtual void base1Method() {}\\n    virtual ~Base1() {}\\n  \
+  \\nprivate:\\n    int base1Data;\\n};\\n\\nclass Base2 {\\npublic:\\n    \
+virtual void base2Method() {}\\n    virtual ~Base2() {}\\n    \\nprivate:\\n  \
+  double base2Data;\\n};\\n\\nclass MultipleDerived : public Base1, public \
+Base2 {\\npublic:\\n    virtual void derivedMethod() {}\\n    virtual void \
+base1Method() override {}\\n    virtual void base2Method() override {}\\n    \
+virtual ~MultipleDerived() {}\\n    \\nprivate:\\n    char derivedData;\\n}; \
+\"\>"], "Print",
+ CellChangeTimes->{3.960882042049097*^9},
+ CellLabel->
+  "During evaluation of \
+In[44]:=",ExpressionUUID->"9d70ee6b-e9a2-ef42-881e-407acb28d05e"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]MultipleDerived\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.9608820420905304`*^9},
+ CellLabel->
+  "During evaluation of \
+In[44]:=",ExpressionUUID->"f901d635-6bdc-4d4d-9115-b6168859f399"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 56}, {490, 71}]}, 
+     InsetBox["\<\"Object: MultipleDerived\"\>", {250, 86},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 56}, {190, 71}]}, 
+      InsetBox["\<\"Base1\"\>", NCache[{100, Rational[127, 2]}, {100, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{10, 56}, {70, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{40, Rational[127, 2]}, {40, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{70, 56}, {190, 71}]}, 
+      InsetBox["\<\"Base1\"\>", NCache[{130, Rational[127, 2]}, {130, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{190, 56}, {370, 71}]}, 
+      InsetBox["\<\"Base2\"\>", NCache[{280, Rational[127, 2]}, {280, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{190, 56}, {250, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{220, Rational[127, 2]}, {220, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{250, 56}, {370, 71}]}, 
+      InsetBox["\<\"Base2\"\>", NCache[{310, Rational[127, 2]}, {310, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{370, 56}, {490, 71}]}, 
+     InsetBox["\<\"MultipleDerived\"\>", 
+      NCache[{430, Rational[127, 2]}, {430, 63.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{500, 10}, {590, 46}]}, 
+     InsetBox["\<\"VTable: MultipleDerived\"\>", {545, 51},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{500, 34}, {590, 46}]}, 
+     InsetBox["\<\"MultipleDerived::derivedMethod\"\>", {545, 40},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{500, 22}, {590, 34}]}, 
+     InsetBox["\<\"MultipleDerived::base1Method\"\>", {545, 28},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{500, 10}, {590, 22}]}, 
+     InsetBox["\<\"MultipleDerived::base2Method\"\>", {545, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{600, -36}, {684, -24}]}, 
+     InsetBox["\<\"VTable: Base2\"\>", {642, -19},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{600, -36}, {684, -24}]}, 
+     InsetBox["\<\"MultipleDerived::base2Method\"\>", {642, -30},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{40, 56}, {40, 46}, {500, 46}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{220, 56}, {220, -24}, {600, -24}}]}}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{880, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.960882042100519*^9},
+ CellLabel->
+  "During evaluation of \
+In[44]:=",ExpressionUUID->"c4c546fd-d940-d04c-a428-e42fc3e7497d"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 4: Virtual Inheritance", "Section",ExpressionUUID->"d86cc581-3e21-8742-8772-430228ac39ea"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Shared virtual bases *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"virtual_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]virtual_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"virtual_inheritance.hpp\", \
+\"VirtualMultiple\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]VirtualMultiple\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[54]:=",ExpressionUUID->"9b70e37d-c677-4a40-8f52-7a804b5c1981"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]virtual_inheritance.hpp\[CloseCurlyDoubleQuote] \
+===\"\>"], "Print",
+ CellChangeTimes->{3.960882045203699*^9},
+ CellLabel->
+  "During evaluation of \
+In[54]:=",ExpressionUUID->"6d405619-87a2-fa4f-bb90-8447e1c422e7"],
+
+Cell[BoxData["\<\"// Virtual inheritance example\\nclass VirtualBase \
+{\\npublic:\\n    virtual void virtualBaseMethod() {}\\n    virtual \
+~VirtualBase() {}\\n    \\nprivate:\\n    int \
+virtualBaseData;\\n};\\n\\nclass VirtualDerived1 : virtual public VirtualBase \
+{\\npublic:\\n    virtual void derived1Method() {}\\n    virtual \
+~VirtualDerived1() {}\\n    \\nprivate:\\n    double \
+derived1Data;\\n};\\n\\nclass VirtualDerived2 : virtual public VirtualBase \
+{\\npublic:\\n    virtual void derived2Method() {}\\n    virtual \
+~VirtualDerived2() {}\\n    \\nprivate:\\n    char \
+derived2Data;\\n};\\n\\nclass VirtualMultiple : public VirtualDerived1, \
+public VirtualDerived2 {\\npublic:\\n    virtual void multipleMethod() {}\\n  \
+  virtual ~VirtualMultiple() {}\\n    \\nprivate:\\n    float \
+multipleData;\\n}; \"\>"], "Print",
+ CellChangeTimes->{3.9608820452086926`*^9},
+ CellLabel->
+  "During evaluation of \
+In[54]:=",ExpressionUUID->"36505126-806f-8d48-9912-15ef12db42b0"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]VirtualMultiple\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.960882045285225*^9},
+ CellLabel->
+  "During evaluation of \
+In[54]:=",ExpressionUUID->"f43abb1e-ea99-1f46-9ec5-125d9facb69b"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{976, 81}, {1156, 96}]}, 
+     InsetBox["\<\"Virtual Base: VirtualBase\"\>", {1066, 69},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
+        FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{976, 81}, {1036, 96}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{1006, Rational[177, 2]}, {1006, 88.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{1036, 81}, {1156, 96}]}, 
+     InsetBox["\<\"VirtualBase\"\>", 
+      NCache[{1096, Rational[177, 2]}, {1096, 88.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 56}, {650, 71}]}, 
+     InsetBox["\<\"Object: VirtualMultiple\"\>", {330, 86},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 56}, {270, 71}]}, 
+      InsetBox["\<\"VirtualDerived1\"\>", 
+       NCache[{140, Rational[127, 2]}, {140, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{10, 56}, {70, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{40, Rational[127, 2]}, {40, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{70, 56}, {150, 71}]}, 
+      InsetBox["\<\"vbase:VirtualBase\"\>", 
+       NCache[{110, Rational[127, 2]}, {110, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{150, 56}, {270, 71}]}, 
+      InsetBox["\<\"VirtualDerived1\"\>", 
+       NCache[{210, Rational[127, 2]}, {210, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{270, 56}, {530, 71}]}, 
+      InsetBox["\<\"VirtualDerived2\"\>", 
+       NCache[{400, Rational[127, 2]}, {400, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{270, 56}, {330, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{300, Rational[127, 2]}, {300, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{330, 56}, {410, 71}]}, 
+      InsetBox["\<\"vbase:VirtualBase\"\>", 
+       NCache[{370, Rational[127, 2]}, {370, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{410, 56}, {530, 71}]}, 
+      InsetBox["\<\"VirtualDerived2\"\>", 
+       NCache[{470, Rational[127, 2]}, {470, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{530, 56}, {650, 71}]}, 
+     InsetBox["\<\"VirtualMultiple\"\>", 
+      NCache[{590, Rational[127, 2]}, {590, 63.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 10}, {753, 46}]}, 
+     InsetBox["\<\"VTable: VirtualMultiple\"\>", 
+      NCache[{Rational[1413, 2], 51}, {706.5, 51}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 34}, {753, 46}]}, 
+     InsetBox["\<\"VirtualMultiple::multipleMethod\"\>", 
+      NCache[{Rational[1413, 2], 40}, {706.5, 40}],
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 22}, {753, 34}]}, 
+     InsetBox["\<\"VirtualDerived1::derived1Method\"\>", 
+      NCache[{Rational[1413, 2], 28}, {706.5, 28}],
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 10}, {753, 22}]}, 
+     InsetBox["\<\"VirtualDerived2::derived2Method\"\>", 
+      NCache[{Rational[1413, 2], 16}, {706.5, 16}],
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{763, -36}, {853, -24}]}, 
+     InsetBox["\<\"VTable: VirtualBase\"\>", {808, -19},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{763, -36}, {853, -24}]}, 
+     InsetBox["\<\"VirtualBase::virtualBaseMethod\"\>", {808, -30},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{863, -58}, {956, -46}]}, 
+     InsetBox["\<\"VTable: VirtualDerived2\"\>", 
+      NCache[{Rational[1819, 2], -41}, {909.5, -41}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{863, -58}, {956, -46}]}, 
+     InsetBox["\<\"VirtualDerived2::derived2Method\"\>", 
+      NCache[{Rational[1819, 2], -52}, {909.5, -52}],
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{1006, 81}, {1006, -24}, {853, -24}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{40, 56}, {40, 46}, {660, 46}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{300, 56}, {300, -46}, {863, -46}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{110, 71}, {110, 96}, {976, 96}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{370, 71}, {370, 96}, {976, 96}}]}}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{1220, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.960882045297224*^9},
+ CellLabel->
+  "During evaluation of \
+In[54]:=",ExpressionUUID->"f6886d84-054d-dd4c-948d-5485162f0a71"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 5: Diamond Inheritance", "Section",ExpressionUUID->"26c46b34-f084-ea49-9003-6fbba0400563"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Classic diamond problem *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"diamond_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]diamond_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"diamond_inheritance.hpp\", \"DiamondBottom\
+\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]DiamondBottom\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[64]:=",ExpressionUUID->"1be0ab1b-2954-a14e-9e9a-4483682677b6"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]diamond_inheritance.hpp\[CloseCurlyDoubleQuote] \
+===\"\>"], "Print",
+ CellChangeTimes->{3.9608820535728817`*^9},
+ CellLabel->
+  "During evaluation of \
+In[64]:=",ExpressionUUID->"525260d5-9965-a64e-8e04-34a6b3f887ec"],
+
+Cell[BoxData["\<\"// Classic diamond inheritance problem\\nclass DiamondBase \
+{\\npublic:\\n    virtual void diamondMethod() {}\\n    virtual \
+~DiamondBase() {}\\n    \\nprivate:\\n    int diamondData;\\n};\\n\\nclass \
+DiamondLeft : virtual public DiamondBase {\\npublic:\\n    virtual void \
+leftMethod() {}\\n    virtual void diamondMethod() override {}\\n    virtual \
+~DiamondLeft() {}\\n    \\nprivate:\\n    double leftData;\\n};\\n\\nclass \
+DiamondRight : virtual public DiamondBase {\\npublic:\\n    virtual void \
+rightMethod() {}\\n    virtual void diamondMethod() override {}\\n    virtual \
+~DiamondRight() {}\\n    \\nprivate:\\n    char rightData;\\n};\\n\\nclass \
+DiamondBottom : public DiamondLeft, public DiamondRight {\\npublic:\\n    \
+virtual void bottomMethod() {}\\n    virtual void diamondMethod() override {}\
+\\n    virtual ~DiamondBottom() {}\\n    \\nprivate:\\n    float \
+bottomData;\\n}; \"\>"], "Print",
+ CellChangeTimes->{3.9608820535798874`*^9},
+ CellLabel->
+  "During evaluation of \
+In[64]:=",ExpressionUUID->"b1c65e12-3416-e44a-b1b9-dc5ade7b8d34"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]DiamondBottom\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.9608820536720753`*^9},
+ CellLabel->
+  "During evaluation of \
+In[64]:=",ExpressionUUID->"2f9ad866-bfbb-3348-b2a7-bc0e0913a224"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{946, 93}, {1126, 108}]}, 
+     InsetBox["\<\"Virtual Base: DiamondBase\"\>", {1036, 81},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
+        FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{946, 93}, {1006, 108}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{976, Rational[201, 2]}, {976, 100.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{1006, 93}, {1126, 108}]}, 
+     InsetBox["\<\"DiamondBase\"\>", 
+      NCache[{1066, Rational[201, 2]}, {1066, 100.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 68}, {650, 83}]}, 
+     InsetBox["\<\"Object: DiamondBottom\"\>", {330, 98},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 68}, {270, 83}]}, 
+      InsetBox["\<\"DiamondLeft\"\>", 
+       NCache[{140, Rational[151, 2]}, {140, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{10, 68}, {70, 83}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{40, Rational[151, 2]}, {40, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{70, 68}, {150, 83}]}, 
+      InsetBox["\<\"vbase:DiamondBase\"\>", 
+       NCache[{110, Rational[151, 2]}, {110, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{150, 68}, {270, 83}]}, 
+      InsetBox["\<\"DiamondLeft\"\>", 
+       NCache[{210, Rational[151, 2]}, {210, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{270, 68}, {530, 83}]}, 
+      InsetBox["\<\"DiamondRight\"\>", 
+       NCache[{400, Rational[151, 2]}, {400, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{270, 68}, {330, 83}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{300, Rational[151, 2]}, {300, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{330, 68}, {410, 83}]}, 
+      InsetBox["\<\"vbase:DiamondBase\"\>", 
+       NCache[{370, Rational[151, 2]}, {370, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{410, 68}, {530, 83}]}, 
+      InsetBox["\<\"DiamondRight\"\>", 
+       NCache[{470, Rational[151, 2]}, {470, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{530, 68}, {650, 83}]}, 
+     InsetBox["\<\"DiamondBottom\"\>", 
+      NCache[{590, Rational[151, 2]}, {590, 75.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 10}, {744, 58}]}, 
+     InsetBox["\<\"VTable: DiamondBottom\"\>", {702, 63},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 46}, {744, 58}]}, 
+     InsetBox["\<\"DiamondBottom::bottomMethod\"\>", {702, 52},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 34}, {744, 46}]}, 
+     InsetBox["\<\"DiamondBottom::diamondMethod\"\>", {702, 40},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 22}, {744, 34}]}, 
+     InsetBox["\<\"DiamondLeft::leftMethod\"\>", {702, 28},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{660, 10}, {744, 22}]}, 
+     InsetBox["\<\"DiamondRight::rightMethod\"\>", {702, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{754, -48}, {832, -36}]}, 
+     InsetBox["\<\"VTable: DiamondBase\"\>", {793, -31},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{754, -48}, {832, -36}]}, 
+     InsetBox["\<\"DiamondBase::diamondMethod\"\>", {793, -42},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{842, -70}, {926, -46}]}, 
+     InsetBox["\<\"VTable: DiamondRight\"\>", {884, -41},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{842, -58}, {926, -46}]}, 
+     InsetBox["\<\"DiamondRight::rightMethod\"\>", {884, -52},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{842, -70}, {926, -58}]}, 
+     InsetBox["\<\"DiamondBottom::diamondMethod\"\>", {884, -64},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{976, 93}, {976, -36}, {832, -36}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{40, 68}, {40, 58}, {660, 58}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{300, 68}, {300, -46}, {842, -46}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{110, 83}, {110, 108}, {946, 108}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{370, 83}, {370, 108}, {946, 108}}]}}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{1220, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.960882053685087*^9},
+ CellLabel->
+  "During evaluation of \
+In[64]:=",ExpressionUUID->"0c514df7-3c4e-3e43-944b-24a67ad617b6"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 6: Complex Inheritance", "Section",ExpressionUUID->"73204528-295f-1343-ab45-eda085fb9a20"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+(* Mixed virtual/non-virtual *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"complex_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]complex_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"complex_inheritance.hpp\", \"Z\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]Z\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",
+ CellLabel->"In[74]:=",ExpressionUUID->"40e24587-a6f8-9d4c-b7ed-3ac311d98aca"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"=== Contents of \
+\[OpenCurlyDoubleQuote]complex_inheritance.hpp\[CloseCurlyDoubleQuote] \
+===\"\>"], "Print",
+ CellChangeTimes->{3.960882074371599*^9},
+ CellLabel->
+  "During evaluation of \
+In[74]:=",ExpressionUUID->"6f0282ac-55a7-9042-a18e-a0418cab9785"],
+
+Cell[BoxData["\<\"// Complex inheritance with mixed virtual and non-virtual \
+inheritance\\nclass X {\\npublic:\\n    virtual void xMethod() {}\\n    \
+virtual ~X() {}\\n    \\nprivate:\\n    int xData;\\n};\\n\\nclass Y1 : \
+public X {\\npublic:\\n    virtual void y1Method() {}\\n    virtual void \
+xMethod() override {}\\n    virtual ~Y1() {}\\n    \\nprivate:\\n    double \
+y1Data;\\n};\\n\\nclass Y2 : virtual public X {\\npublic:\\n    virtual void \
+y2Method() {}\\n    virtual void xMethod() override {}\\n    virtual ~Y2() {}\
+\\n    \\nprivate:\\n    char y2Data;\\n};\\n\\nclass Z : public Y1, public \
+Y2 {\\npublic:\\n    virtual void zMethod() {}\\n    virtual void xMethod() \
+override {}\\n    virtual ~Z() {}\\n    \\nprivate:\\n    float zData;\\n}; \
+\"\>"], "Print",
+ CellChangeTimes->{3.960882074378599*^9},
+ CellLabel->
+  "During evaluation of \
+In[74]:=",ExpressionUUID->"e5ba0e85-5b66-c247-9246-784e902f4b9a"],
+
+Cell[BoxData["\<\"=== Layout for \[OpenCurlyDoubleQuote]Z\
+\[CloseCurlyDoubleQuote] ===\"\>"], "Print",
+ CellChangeTimes->{3.960882074443144*^9},
+ CellLabel->
+  "During evaluation of \
+In[74]:=",ExpressionUUID->"1025aeab-b999-8242-b2f9-125b51832c49"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{920, 93}, {1100, 108}]}, 
+     InsetBox["\<\"Virtual Base: X\"\>", {1010, 81},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
+        FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{920, 93}, {980, 108}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{950, Rational[201, 2]}, {950, 100.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{980, 93}, {1100, 108}]}, 
+     InsetBox["\<\"X\"\>", NCache[{1040, Rational[201, 2]}, {1040, 100.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 68}, {690, 83}]}, InsetBox["\<\"Object: Z\"\>", {350, 98},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 68}, {310, 83}]}, 
+      InsetBox["\<\"Y1\"\>", NCache[{160, Rational[151, 2]}, {160, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {{
+       {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+        1, 1, 0.9]], RectangleBox[{10, 68}, {190, 83}]}, 
+       InsetBox["\<\"X\"\>", NCache[{100, Rational[151, 2]}, {100, 75.5}],
+        BaseStyle->{
+         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+        1, 0.7, 0.7]], RectangleBox[{10, 68}, {70, 83}]}, 
+       InsetBox["\<\"vptr\"\>", NCache[{40, Rational[151, 2]}, {40, 75.5}],
+        BaseStyle->{
+         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]],
+         RectangleBox[{70, 68}, {190, 83}]}, 
+       InsetBox["\<\"X\"\>", NCache[{130, Rational[151, 2]}, {130, 75.5}],
+        BaseStyle->{
+         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{190, 68}, {310, 83}]}, 
+      InsetBox["\<\"Y1\"\>", NCache[{250, Rational[151, 2]}, {250, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{310, 68}, {570, 83}]}, 
+      InsetBox["\<\"Y2\"\>", NCache[{440, Rational[151, 2]}, {440, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{310, 68}, {370, 83}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{340, Rational[151, 2]}, {340, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{370, 68}, {450, 83}]}, 
+      InsetBox["\<\"vbase:X\"\>", NCache[{410, Rational[151, 2]}, {410, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{450, 68}, {570, 83}]}, 
+      InsetBox["\<\"Y2\"\>", NCache[{510, Rational[151, 2]}, {510, 75.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{570, 68}, {690, 83}]}, 
+     InsetBox["\<\"Z\"\>", NCache[{630, Rational[151, 2]}, {630, 75.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{700, 10}, {760, 58}]}, InsetBox["\<\"VTable: Z\"\>", {730, 63},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{700, 46}, {760, 58}]}, InsetBox["\<\"Z::zMethod\"\>", {730, 52},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{700, 34}, {760, 46}]}, InsetBox["\<\"Z::xMethod\"\>", {730, 40},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{700, 22}, {760, 34}]}, InsetBox["\<\"Y1::y1Method\"\>", {730, 28},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{700, 10}, {760, 22}]}, InsetBox["\<\"Y2::y2Method\"\>", {730, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{770, -48}, {830, -36}]}, InsetBox["\<\"VTable: X\"\>", {800, -31},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{770, -48}, {830, -36}]}, InsetBox["\<\"X::xMethod\"\>", {800, -42},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{840, -70}, {900, -46}]}, InsetBox["\<\"VTable: Y2\"\>", {870, -41},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{840, -58}, {900, -46}]}, 
+     InsetBox["\<\"Y2::y2Method\"\>", {870, -52},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{840, -70}, {900, -58}]}, InsetBox["\<\"Z::xMethod\"\>", {870, -64},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{950, 93}, {950, -36}, {830, -36}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{40, 68}, {40, 58}, {700, 58}}]}, 
+    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{340, 68}, {340, -46}, {840, -46}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
+     ArrowBox[{{410, 83}, {410, 108}, {920, 108}}]}}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{1260, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Print",
+ CellChangeTimes->{3.960882074471201*^9},
+ CellLabel->
+  "During evaluation of \
+In[74]:=",ExpressionUUID->"807b2860-4c1c-2346-82a2-a8d30ba9b25f"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 7: Deep Inheritance", "Section",ExpressionUUID->"276b6ada-a0eb-f940-bab5-d9ef4e7e98f0"],
+
+Cell["\<\
+(* 5-level hierarchy *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"deep_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]deep_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"deep_inheritance.hpp\", \"Level5\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]Level5\[CloseCurlyDoubleQuote] \
+===\"];
+Print[result];\
+\>", "Input",ExpressionUUID->"b0be25a0-d419-a54d-b98d-7eaaf3b787ca"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 8: Interface Inheritance", "Section",ExpressionUUID->"45681659-a865-6b44-b77a-7bd832bd2961"],
+
+Cell["\<\
+(* Abstract classes *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"interface_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]interface_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"interface_inheritance.hpp\", \
+\"MultiInterface\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]MultiInterface\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",ExpressionUUID->"d98b895d-d3fa-4044-a040-b1b11d1fe893"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 9: Template Inheritance", "Section",ExpressionUUID->"5859aeb5-30bf-8e4c-9f1e-3bc3d80ceb27"],
+
+Cell["\<\
+(* Template instantiation *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"template_inheritance.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]template_inheritance.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"template_inheritance.hpp\", \
+\"DoubleDerived\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]DoubleDerived\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",ExpressionUUID->"6431be15-c145-c34f-9452-de89ba21584e"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test 10: Extreme Complexity", "Section",ExpressionUUID->"51a01c39-4f09-9d4f-befa-f0f4bb3af05a"],
+
+Cell["\<\
+(* Multiple virtual bases & deep hier. *)
+(* 1. Read and print the C++ source file *)
+code = Import[\"extreme_complexity.hpp\", \"Text\"];
+Print[\"=== Contents of \[OpenCurlyDoubleQuote]extreme_complexity.hpp\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[code];
+
+(* 2. Parse & visualize *)
+result = ParseAndDrawClassLayout[\"extreme_complexity.hpp\", \
+\"UltimateComplex\"];
+Print[\"=== Layout for \[OpenCurlyDoubleQuote]UltimateComplex\
+\[CloseCurlyDoubleQuote] ===\"];
+Print[result];\
+\>", "Input",ExpressionUUID->"bc242055-3025-9344-a792-54020c92d3de"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Batch Testing - All Tests at Once", "Section",ExpressionUUID->"eea6b478-e81b-fc43-8709-6aaba1ee202d"],
+
+Cell["\<\
+(* Run all tests in batch mode with source preview *)
+results = Table[
+  file = testCases[[i, 4]]; cls = testCases[[i, 5]];
+  Print[\"\\n--- Test \" <> ToString[i] <> \": \" <> cls <> \" ---\"];  
+  code = Import[file, \"Text\"]; Print[\"=== \" <> file <> \" ===\"]; \
+Print[code];
+  res = ParseAndDrawClassLayout[file, cls]; Print[res];
+  If[Head[res] === Graphics, \"\[Checkmark] PASS\", \"\:2717 FAIL\"],
+  {i, Length@testCases}
+];
+Grid[Prepend[Transpose[{Range[Length@results], results}], {\"Test #\", \
+\"Status\"}], Frame -> All]\
+\>", "Input",ExpressionUUID->"31241aa6-1ab7-0549-b625-31fe89a10556"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Summary and Analysis", "Section",ExpressionUUID->"48f82ad7-541c-7f4e-985b-4a0b447d6d5a"],
+
+Cell["\<\
+(* Summarize outcomes and key findings here *)
+Print[\"=== C++ Class Layout Parser Test Summary ===\"];\
+\>", "Input",ExpressionUUID->"c0fac610-4953-dd43-bbc4-af4c63b0c99c"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1280, 652},
+WindowMargins->{{-5.5, Automatic}, {Automatic, -5.5}},
+WindowTitle->"CppClassLayoutParser Demo",
+FrontEndVersion->"14.2 for Microsoft Windows (64-bit) (December 26, 2024)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"feb6d5fa-71a2-7d45-9dd1-9001f98b9ac5"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[615, 23, 131, 0, 96, "Title",ExpressionUUID->"e948933d-961e-ff40-8fec-7ab3d65431a3"],
+Cell[749, 25, 276, 4, 55, "Text",ExpressionUUID->"7d403d64-584a-684b-92e6-d3d94128afb9"],
+Cell[CellGroupData[{
+Cell[1050, 33, 98, 0, 66, "Section",ExpressionUUID->"cddcf1c2-8261-4546-a714-efb0ab69b96e"],
+Cell[1151, 35, 248, 6, 76, "Input",ExpressionUUID->"c919bc9e-2265-664b-a565-dbc6a3faa9c5"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1436, 46, 166, 3, 66, "Section",ExpressionUUID->"47beccce-a8f8-374e-8928-a8983b83ae8f"],
+Cell[1605, 51, 2557, 54, 325, "Input",ExpressionUUID->"5a19e12e-2683-f149-99a2-17cf644f2bcc"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4199, 110, 101, 0, 66, "Section",ExpressionUUID->"58bb6045-4db5-fd4b-b6ed-f88a8fe7adc4"],
+Cell[CellGroupData[{
+Cell[4325, 114, 562, 14, 174, "Input",ExpressionUUID->"8ca7713a-7ea0-e745-bdb5-3d7e23fb9c92"],
+Cell[CellGroupData[{
+Cell[4912, 132, 275, 6, 22, "Print",ExpressionUUID->"e0cd4543-3e0a-a840-b418-f8ffd3c9c895"],
+Cell[5190, 140, 423, 7, 197, "Print",ExpressionUUID->"17c78659-bb4a-884e-92d1-ac5d106557e7"],
+Cell[5616, 149, 260, 5, 22, "Print",ExpressionUUID->"1a8c3e33-4993-2643-aaae-222519ddff7e"],
+Cell[5879, 156, 2103, 45, 808, "Print",ExpressionUUID->"0727a0ff-13a3-f746-9e2a-5187203fd179"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8043, 208, 100, 0, 66, "Section",ExpressionUUID->"cea14842-e58d-5f48-8074-1983bfe834b4"],
+Cell[CellGroupData[{
+Cell[8168, 212, 557, 14, 174, "Input",ExpressionUUID->"c4a5ec3b-2ddc-1846-95e3-324055562834"],
+Cell[CellGroupData[{
+Cell[8750, 230, 274, 6, 22, "Print",ExpressionUUID->"fdde91f9-9658-6c47-96cc-b6819eeb72a0"],
+Cell[9027, 238, 553, 9, 338, "Print",ExpressionUUID->"5aef6e94-a7f5-3142-a420-bd2d6e0a16d9"],
+Cell[9583, 249, 258, 5, 22, "Print",ExpressionUUID->"f57d453d-d384-0d44-be63-1081a1aad075"],
+Cell[9844, 256, 2678, 54, 808, "Print",ExpressionUUID->"7731a340-0834-324a-935e-76f5af745d89"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[12583, 317, 102, 0, 66, "Section",ExpressionUUID->"c8000c3c-b88c-e449-91cc-9c13c8fb83f2"],
+Cell[CellGroupData[{
+Cell[12710, 321, 575, 15, 174, "Input",ExpressionUUID->"85f346af-39f7-d144-9115-d4b9645aa7db"],
+Cell[CellGroupData[{
+Cell[13310, 340, 278, 6, 22, "Print",ExpressionUUID->"17514a5e-ecd7-cc4a-bcff-7ec63da1e65a"],
+Cell[13591, 348, 778, 12, 513, "Print",ExpressionUUID->"9d70ee6b-e9a2-ef42-881e-407acb28d05e"],
+Cell[14372, 362, 266, 5, 22, "Print",ExpressionUUID->"f901d635-6bdc-4d4d-9115-b6168859f399"],
+Cell[14641, 369, 4557, 87, 808, "Print",ExpressionUUID->"c4c546fd-d940-d04c-a428-e42fc3e7497d"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[19259, 463, 101, 0, 66, "Section",ExpressionUUID->"d86cc581-3e21-8742-8772-430228ac39ea"],
+Cell[CellGroupData[{
+Cell[19385, 467, 571, 15, 174, "Input",ExpressionUUID->"9b70e37d-c677-4a40-8f52-7a804b5c1981"],
+Cell[CellGroupData[{
+Cell[19981, 486, 275, 6, 22, "Print",ExpressionUUID->"6d405619-87a2-fa4f-bb90-8447e1c422e7"],
+Cell[20259, 494, 990, 16, 636, "Print",ExpressionUUID->"36505126-806f-8d48-9912-15ef12db42b0"],
+Cell[21252, 512, 264, 5, 22, "Print",ExpressionUUID->"f43abb1e-ea99-1f46-9ec5-125d9facb69b"],
+Cell[21519, 519, 7391, 143, 808, "Print",ExpressionUUID->"f6886d84-054d-dd4c-948d-5485162f0a71"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[28971, 669, 101, 0, 66, "Section",ExpressionUUID->"26c46b34-f084-ea49-9003-6fbba0400563"],
+Cell[CellGroupData[{
+Cell[29097, 673, 570, 15, 174, "Input",ExpressionUUID->"1be0ab1b-2954-a14e-9e9a-4483682677b6"],
+Cell[CellGroupData[{
+Cell[29692, 692, 277, 6, 22, "Print",ExpressionUUID->"525260d5-9965-a64e-8e04-34a6b3f887ec"],
+Cell[29972, 700, 1088, 16, 689, "Print",ExpressionUUID->"b1c65e12-3416-e44a-b1b9-dc5ade7b8d34"],
+Cell[31063, 718, 264, 5, 22, "Print",ExpressionUUID->"2f9ad866-bfbb-3348-b2a7-bc0e0913a224"],
+Cell[31330, 725, 7648, 147, 808, "Print",ExpressionUUID->"0c514df7-3c4e-3e43-944b-24a67ad617b6"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[39039, 879, 101, 0, 66, "Section",ExpressionUUID->"73204528-295f-1343-ab45-eda085fb9a20"],
+Cell[CellGroupData[{
+Cell[39165, 883, 544, 13, 174, "Input",ExpressionUUID->"40e24587-a6f8-9d4c-b7ed-3ac311d98aca"],
+Cell[CellGroupData[{
+Cell[39734, 900, 275, 6, 22, "Print",ExpressionUUID->"6f0282ac-55a7-9042-a18e-a0418cab9785"],
+Cell[40012, 908, 934, 14, 689, "Print",ExpressionUUID->"e5ba0e85-5b66-c247-9246-784e902f4b9a"],
+Cell[40949, 924, 250, 5, 22, "Print",ExpressionUUID->"1025aeab-b999-8242-b2f9-125b51832c49"],
+Cell[41202, 931, 7461, 132, 808, "Print",ExpressionUUID->"807b2860-4c1c-2346-82a2-a8d30ba9b25f"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[48724, 1070, 98, 0, 66, "Section",ExpressionUUID->"276b6ada-a0eb-f940-bab5-d9ef4e7e98f0"],
+Cell[48825, 1072, 515, 13, 174, "Input",ExpressionUUID->"b0be25a0-d419-a54d-b98d-7eaaf3b787ca"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[49377, 1090, 103, 0, 66, "Section",ExpressionUUID->"45681659-a865-6b44-b77a-7bd832bd2961"],
+Cell[49483, 1092, 547, 14, 174, "Input",ExpressionUUID->"d98b895d-d3fa-4044-a040-b1b11d1fe893"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[50067, 1111, 102, 0, 66, "Section",ExpressionUUID->"5859aeb5-30bf-8e4c-9f1e-3bc3d80ceb27"],
+Cell[50172, 1113, 548, 14, 174, "Input",ExpressionUUID->"6431be15-c145-c34f-9452-de89ba21584e"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[50757, 1132, 101, 0, 66, "Section",ExpressionUUID->"51a01c39-4f09-9d4f-befa-f0f4bb3af05a"],
+Cell[50861, 1134, 559, 14, 174, "Input",ExpressionUUID->"bc242055-3025-9344-a792-54020c92d3de"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[51457, 1153, 107, 0, 70, "Section",ExpressionUUID->"eea6b478-e81b-fc43-8709-6aaba1ee202d"],
+Cell[51567, 1155, 615, 13, 70, "Input",ExpressionUUID->"31241aa6-1ab7-0549-b625-31fe89a10556"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[52219, 1173, 94, 0, 70, "Section",ExpressionUUID->"48f82ad7-541c-7f4e-985b-4a0b447d6d5a"],
+Cell[52316, 1175, 183, 3, 70, "Input",ExpressionUUID->"c0fac610-4953-dd43-bbc4-af4c63b0c99c"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+

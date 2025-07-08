@@ -280,7 +280,8 @@ Options[DrawClassDiagram] = {
   ColorFunctions -> True,    (* Default: Enable color coding for different element types *)
   ArrowSize -> 0.01,         (* Default: 0.01 arrow head size *)
   SeparateVTables -> True,   (* CHANGED: Always show separate VTables by default *)
-  MergeVTables -> False      (* NEW: Option to merge VTables with first vptr *)
+  MergeVTables -> False,     (* NEW: Option to merge VTables with first vptr *)
+  BaseLabelFontSize -> 16    (* NEW: User-configurable base font size for labels *)
 };
 
 DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Module[
@@ -300,6 +301,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     arrowSize = OptionValue[ArrowSize],
     separateVTables = OptionValue[SeparateVTables],
     mergeVTables = OptionValue[MergeVTables],
+    baseLabelFontSize = OptionValue[BaseLabelFontSize],
     
     (* --- UNIFORM BLOCK SIZE FOR ALL SLOTS AND CLASSES --- *)
     uniformBlockWidth = 100,
@@ -325,11 +327,20 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     getColor, drawSlot, drawMainBar, drawVTables, drawVirtualBases, collectVTableStructures, updateDimensions,
   
     (* Dynamic scaling: set a max total width for main object and virtual base panels *)
-    maxBarWidth, mainNumSlots
+    maxBarWidth, mainNumSlots,
+    
+    (* --- DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) --- *)
+    diagramRefSize, arrowThickness, arrowHeadSize, labelFontSize
   },
   
   (* SET UNIFORM BLOCK SIZE AT THE BEGINNING *)
   Uscaled = uniformBlockWidth;
+  
+  (* --- DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) --- *)
+  diagramRefSize = Max[totalWidth, totalHeight, 400];
+  arrowThickness = 0.0025 * (400/diagramRefSize);
+  arrowHeadSize = 0.03 * (400/diagramRefSize);
+  labelFontSize = baseLabelFontSize * (400/diagramRefSize);
   
   (* --- STRICT SLOT-TYPE-BASED SIZING (ABSOLUTE UNIFORMITY) --- *)
   vptrWidth = 60;
@@ -418,12 +429,12 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         subWidthList = getSlotWidth /@ nestedLayout;
         actualWidth = Total[subWidthList];
         (* Draw the outer rectangle for the subobject at the correct width *)
-        AppendTo[nestedGraphics, {
+            AppendTo[nestedGraphics, {
           {EdgeForm[{Black, Thickness[0.0015]}], FaceForm[color],
            Rectangle[{x, y}, {x + actualWidth, y + H}]},
           Text[label, {x + actualWidth/2, y + H/2},
-              BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
-        }];
+              BaseStyle -> {FontFamily -> "Arial", FontSize -> labelFontSize, FontWeight -> Bold}]
+            }];
         (* Recursively draw the nested layout, each at its fixed width *)
         Do[
           Module[{nestedItem = nestedLayout[[j]], slotW = subWidthList[[j]]},
@@ -441,7 +452,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
       {EdgeForm[{Black, Thickness[0.0015]}], FaceForm[color],
        Rectangle[{x, y}, {x + actualWidth, y + H}]},
       Text[label, {x + actualWidth/2, y + H/2},
-           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> labelFontSize, FontWeight -> Bold}]
     }
   ];
   
@@ -452,7 +463,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
        Rectangle[{gap, mainY}, {gap + mainBarWidth, mainY + H}]},
       Text["Object: " <> mainClassName, 
            {gap + mainBarWidth/2, mainY + H + 15},
-           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> labelFontSize, FontWeight -> Bold}]
     }];
     
     Do[
@@ -485,7 +496,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
        Rectangle[{vtableX, vtableY}, {vtableX + vtableWidth, vtableY + vtableHeight}]},
           Text["VTable: " <> className, 
                {vtableX + vtableWidth/2, vtableY + vtableHeight + 5},
-           BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]
+           BaseStyle -> {FontFamily -> "Arial", FontSize -> labelFontSize, FontWeight -> Bold}]
     }];
     
         (* Draw VTable entries from bottom to top *)
@@ -496,7 +507,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
                       {vtableX + vtableWidth, vtableY + (Length[vtableEntries]-j+1)*vH}]},
             Text[vtableEntries[[j]], 
                  {vtableX + vtableWidth/2, vtableY + (Length[vtableEntries]-j)*vH + vH/2},
-             BaseStyle -> {FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]
+             BaseStyle -> {FontFamily -> "Courier", FontSize -> labelFontSize, FontWeight -> Bold}]
       }]
         , {j, Length[vtableEntries]}];
       ]
@@ -844,7 +855,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
            Rectangle[{vbX, newVbY}, {vbX + vbBarWidth, newVbY + H}]},
           Text["Virtual Base: " <> vb["ClassName"],
                {vbX + vbBarWidth/2, newVbY - 12},
-               BaseStyle -> {FontFamily -> "Arial", FontSize -> 8, 
+               BaseStyle -> {FontFamily -> "Arial", FontSize -> labelFontSize, 
                             FontColor -> Blue, FontWeight -> Bold}]
         }];
         
@@ -855,7 +866,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
             AppendTo[graphics, drawSlot[vbLayout[[j]], currentX, newVbY, slotWidth]];
             currentX += slotWidth;
           ]
-        , {j, Length[vbLayout]}];
+          , {j, Length[vbLayout]}];
         
         x += vbBarWidth + gap;  (* Move right for next virtual base *)
       ]
@@ -892,7 +903,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
             midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
           
             AppendTo[arrows, {
-              Black, Thickness[0.003], Arrowheads[{0, 0.03}],
+              Black, Thickness[arrowThickness], Arrowheads[{0, arrowHeadSize}],
               Arrow[{adjustedSrc, midPt, adjustedTgt}]
             }];
           ];
@@ -923,7 +934,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
                 midPt = {adjustedSrc[[1]], adjustedTgt[[2]]};
                     
                 AppendTo[arrows, {
-                  Blue, Thickness[0.003], Arrowheads[{0, 0.03}],
+                  Blue, Thickness[arrowThickness], Arrowheads[{0, arrowHeadSize}],
                   Arrow[{adjustedSrc, midPt, adjustedTgt}]
                 }];
               ],
@@ -1004,6 +1015,23 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
   (* Build the complete diagram *)
   collectVTableStructures[];
   updateDimensions[];  (* FIXED: Update dimensions after VTable collection *)
+  
+  (* --- ENSURE VTABLE ANCHORS ARE ALWAYS REGISTERED --- *)
+  If[Length[vtableStructures] > 0,
+    Do[
+      Module[{vtableStruct = vtableStructures[[i]]},
+        vtableAnchors[vtableStruct["ClassName"]] = vtableStruct["Position"];
+      ],
+      {i, Length[vtableStructures]}
+    ];
+  ];
+  
+  (* --- DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) --- *)
+  diagramRefSize = Max[totalWidth, totalHeight, 400];
+  arrowThickness = 0.0025 * (400/diagramRefSize);
+  arrowHeadSize = 0.03 * (400/diagramRefSize);
+  labelFontSize = baseLabelFontSize * (400/diagramRefSize);
+  
   drawVirtualBases[];
   drawMainBar[];
   drawVTables[];
