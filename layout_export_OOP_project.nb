@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[     53679,       1039]
-NotebookOptionsPosition[     50791,        987]
-NotebookOutlinePosition[     51245,       1005]
-CellTagsIndexPosition[     51202,       1002]
+NotebookDataLength[    104905,       2032]
+NotebookOptionsPosition[    100755,       1959]
+NotebookOutlinePosition[    101209,       1977]
+CellTagsIndexPosition[    101166,       1974]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -24,7 +24,7 @@ Cell[BoxData[{
  RowBox[{
   RowBox[{"SetDirectory", "[", 
    RowBox[{"NotebookDirectory", "[", "]"}], "]"}], ";"}], "\[IndentingNewLine]", 
- RowBox[{"<<", "\"\<CppClassLayoutParser1.wl\>\""}]}], "Input",
+ RowBox[{"<<", "\"\<CppClassLayoutParser.wl\>\""}]}], "Input",
  CellChangeTimes->{{3.957080167526148*^9, 3.9570803399675045`*^9}, {
    3.9570803729679737`*^9, 3.9570804147669106`*^9}, {3.957081041950865*^9, 
    3.957081052298046*^9}, {3.957081205202717*^9, 3.9570812355263233`*^9}, {
@@ -39,9 +39,10 @@ Cell[BoxData[{
    3.958712803258875*^9, 3.9587128044680347`*^9}, {3.959074834448284*^9, 
    3.9590748377978115`*^9}, 3.9601150804888344`*^9, {3.9602809596674767`*^9, 
    3.960280963844393*^9}, {3.960291299342325*^9, 3.960291306465578*^9}, {
-   3.9602918158187027`*^9, 3.9602918169493732`*^9}, 3.9603787152919483`*^9},
+   3.9602918158187027`*^9, 3.9602918169493732`*^9}, 3.9603787152919483`*^9, 
+   3.9607000698215065`*^9},
  CellLabel->
-  "In[459]:=",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
+  "In[131]:=",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
 
 Cell[BoxData[
  RowBox[{
@@ -52,9 +53,9 @@ Cell[BoxData[
  CellChangeTimes->{{3.957788454263172*^9, 3.9577884559764786`*^9}, 
    3.9577885996859913`*^9, {3.958120355500841*^9, 3.958120356508581*^9}, 
    3.9601098204423256`*^9, {3.9603077170996037`*^9, 3.960307721629261*^9}, 
-   3.960446249217045*^9},
+   3.960446249217045*^9, {3.9604546467904224`*^9, 3.9604546483865776`*^9}},
  CellLabel->
-  "In[462]:=",ExpressionUUID->"e1b829b0-e926-fb4a-924c-22c2bc3a67bc"],
+  "In[134]:=",ExpressionUUID->"e1b829b0-e926-fb4a-924c-22c2bc3a67bc"],
 
 Cell[CellGroupData[{
 
@@ -75,7 +76,7 @@ Cell[BoxData[
    3.9591538287159176`*^9}, {3.9596871584488907`*^9, 3.959687159521265*^9}, 
    3.959940839820677*^9},
  CellLabel->
-  "In[463]:=",ExpressionUUID->"36270ee0-d26c-5247-8759-53f4c119fba6"],
+  "In[135]:=",ExpressionUUID->"36270ee0-d26c-5247-8759-53f4c119fba6"],
 
 Cell[BoxData[
  RowBox[{"\[LeftAssociation]", 
@@ -94,8 +95,9 @@ Cell[BoxData[
         RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Y1\"\>"}], ",", 
         RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
          RowBox[{"{", 
-          RowBox[{"\<\"Y1::f\"\>", ",", "\<\"Y1::g1\"\>"}], "}"}]}]}], 
-       "\[RightAssociation]"}], ",", 
+          
+          RowBox[{"\<\"Y1::f\"\>", ",", "\<\"Y1::g1\"\>", 
+           ",", "\<\"X::g2\"\>"}], "}"}]}]}], "\[RightAssociation]"}], ",", 
       RowBox[{"\[LeftAssociation]", 
        RowBox[{
         RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:X\"\>"}], ",", 
@@ -129,7 +131,7 @@ Cell[BoxData[
             RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
-            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Y1\"\>"}], ",", 
+            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"X\"\>"}], ",", 
             RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
              RowBox[{"{", 
               RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
@@ -146,14 +148,15 @@ Cell[BoxData[
        RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
        RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
         RowBox[{"{", 
-         RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
-      "\[RightAssociation]"}], "}"}]}], ",", 
+         RowBox[{"\<\"Y1::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}], ",", 
+       RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+        RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}], "}"}]}], ",", 
    RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "16"}], ",", 
    RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
    RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
     RowBox[{"{", 
-     RowBox[{"\<\"Y1::f\"\>", ",", "\<\"Y1::g1\"\>"}], "}"}]}]}], 
-  "\[RightAssociation]"}]], "Output",
+     RowBox[{"\<\"Y1::f\"\>", ",", "\<\"Y1::g1\"\>", ",", "\<\"X::g2\"\>"}], 
+     "}"}]}]}], "\[RightAssociation]"}]], "Output",
  CellChangeTimes->{
   3.960034277322979*^9, 3.960034411438284*^9, 3.9601058140075607`*^9, 
    3.960109488055313*^9, 3.960109769665844*^9, {3.960109821405678*^9, 
@@ -221,9 +224,33 @@ Cell[BoxData[
    3.9604387541747036`*^9}, 3.960438980467779*^9, 3.960439658396244*^9, 
    3.9604398425905914`*^9, 3.9604433795814133`*^9, 3.9604440004943695`*^9, 
    3.9604442109583225`*^9, 3.960445026006937*^9, 3.9604450650540695`*^9, 
-   3.9604451946808968`*^9, 3.9604461794676056`*^9},
+   3.9604451946808968`*^9, 3.9604461794676056`*^9, 3.960446624745453*^9, 
+   3.960450249111429*^9, 3.960450758571514*^9, 3.960450989961609*^9, 
+   3.9604511523632736`*^9, 3.9604514004201736`*^9, 3.960451986593355*^9, 
+   3.9604531318167057`*^9, 3.9604534218330727`*^9, 3.9604540127177544`*^9, {
+   3.9604542686977673`*^9, 3.960454285451809*^9}, 3.960454601811516*^9, 
+   3.9604546522804337`*^9, 3.960454869738596*^9, 3.960458323889509*^9, 
+   3.9605289317464695`*^9, 3.960529000780348*^9, 3.9605480146617584`*^9, 
+   3.9605480469801807`*^9, 3.9606204307197285`*^9, 3.960620970634758*^9, 
+   3.9606213152672634`*^9, 3.960621660358616*^9, 3.960621828034767*^9, 
+   3.960621942737873*^9, 3.960621991394705*^9, 3.9606226124715233`*^9, 
+   3.960623241226246*^9, 3.9606232757323017`*^9, 3.960623411355156*^9, 
+   3.9606237953438263`*^9, 3.9606248798057785`*^9, 3.960626072723469*^9, 
+   3.9606269321120644`*^9, 3.9606272819710064`*^9, 3.960627319972599*^9, 
+   3.9606365730155945`*^9, 3.9606367505939445`*^9, 3.960636838053135*^9, 
+   3.9606373833981495`*^9, 3.960639391555414*^9, 3.9606401721889553`*^9, 
+   3.960699867530716*^9, 3.9606999888562775`*^9, 3.9607000727064075`*^9, 
+   3.960702382421606*^9, 3.9610499175395355`*^9, 3.9610501594401207`*^9, 
+   3.9611342149423294`*^9, 3.961134334211111*^9, 3.9611343689039593`*^9, 
+   3.9611346063904552`*^9, 3.96113810854578*^9, {3.9611384391871414`*^9, 
+   3.96113844771257*^9}, {3.9611406800600758`*^9, 3.961140686422037*^9}, {
+   3.9611413824150715`*^9, 3.9611413923011646`*^9}, 3.9611471596147137`*^9, 
+   3.9611472028538647`*^9, 3.9611482764682903`*^9, 3.961217689174288*^9, 
+   3.961224246757574*^9, 3.9612249590117397`*^9, 3.961249077213047*^9, 
+   3.961301839770693*^9, {3.9613029604054527`*^9, 3.9613029717742405`*^9}, 
+   3.961304542195816*^9, 3.961305147171547*^9, 3.9613054172303524`*^9},
  CellLabel->
-  "Out[463]=",ExpressionUUID->"39a7280f-decd-5b47-9d96-824377b67b16"]
+  "Out[135]=",ExpressionUUID->"f28aa5c4-1a46-1f4c-af8c-4dee3784579a"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -235,92 +262,103 @@ Cell[BoxData[
    3.958472618401165*^9}, 3.9584942191450253`*^9, {3.9585436192099304`*^9, 
    3.958543662782896*^9}, 3.9587067873204384`*^9},
  CellLabel->
-  "In[464]:=",ExpressionUUID->"643bc87c-4fea-f144-9ab6-44b161d5c732"],
+  "In[136]:=",ExpressionUUID->"643bc87c-4fea-f144-9ab6-44b161d5c732"],
 
 Cell[BoxData[
  GraphicsBox[{{{
-     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.003], 
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
       Dashing[{Small, Small}]}], FaceForm[None], 
-      RectangleBox[{245, 69}, {295, 84}]}, 
-     InsetBox["\<\"Virtual Base: X\"\>", {270, 57},
+      RectangleBox[{430, 81}, {610, 96}]}, 
+     InsetBox["\<\"Virtual Base: X\"\>", {520, 69},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
-        FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 0.7, 0.7]], RectangleBox[{245, 69}, {270, 84}]}, 
-     InsetBox["\<\"vptr\"\>", 
-      NCache[{Rational[515, 2], Rational[153, 2]}, {257.5, 76.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontColor -> 
+        RGBColor[0, 0, 1], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{430, 81}, {490, 96}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{460, Rational[177, 2]}, {460, 88.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{270, 69}, {295, 84}]}, 
-     InsetBox["\<\"X\"\>", 
-      NCache[{Rational[565, 2], Rational[153, 2]}, {282.5, 76.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{490, 81}, {610, 96}]}, 
+     InsetBox["\<\"X\"\>", NCache[{550, Rational[177, 2]}, {550, 88.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.003]}], FaceForm[None], 
-      RectangleBox[{10, 44}, {85, 59}]}, 
-     InsetBox["\<\"Object: Y1\"\>", NCache[{Rational[95, 2], 74}, {47.5, 74}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 56}, {270, 71}]}, InsetBox["\<\"Object: Y1\"\>", {140, 86},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 0.7, 0.7]], RectangleBox[{10, 44}, {35, 59}]}, 
-     InsetBox["\<\"vptr\"\>", 
-      NCache[{Rational[45, 2], Rational[103, 2]}, {22.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{10, 56}, {70, 71}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{40, Rational[127, 2]}, {40, 63.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      0.6, 0.6, 1]], RectangleBox[{35, 44}, {60, 59}]}, 
-     InsetBox["\<\"vbase:X\"\>", 
-      NCache[{Rational[95, 2], Rational[103, 2]}, {47.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      0.6, 0.6, 1]], RectangleBox[{70, 56}, {150, 71}]}, 
+     InsetBox["\<\"vbase:X\"\>", NCache[{110, Rational[127, 2]}, {110, 63.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{60, 44}, {85, 59}]}, 
-     InsetBox["\<\"Y1\"\>", 
-      NCache[{Rational[145, 2], Rational[103, 2]}, {72.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{150, 56}, {270, 71}]}, 
+     InsetBox["\<\"Y1\"\>", NCache[{210, Rational[127, 2]}, {210, 63.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 34}]}, InsetBox["\<\"VTable: Y1\"\>", {125, 39},
+      RectangleBox[{280, 10}, {340, 46}]}, InsetBox["\<\"VTable: Y1\"\>", {310, 51},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 22}, {155, 34}]}, InsetBox["\<\"Y1::f\"\>", {125, 28},
+      RectangleBox[{280, 34}, {340, 46}]}, InsetBox["\<\"Y1::f\"\>", {310, 40},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 22}]}, InsetBox["\<\"Y1::g1\"\>", {125, 16},
+      RectangleBox[{280, 22}, {340, 34}]}, InsetBox["\<\"Y1::g1\"\>", {310, 28},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{280, 10}, {340, 22}]}, InsetBox["\<\"X::g2\"\>", {310, 16},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -24}, {225, 0}]}, InsetBox["\<\"VTable: X\"\>", {195, 5},
+      RectangleBox[{350, -36}, {410, -12}]}, InsetBox["\<\"VTable: X\"\>", {380, -7},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -12}, {225, 0}]}, InsetBox["\<\"X::f\"\>", {195, -6},
+      RectangleBox[{350, -24}, {410, -12}]}, InsetBox["\<\"Y1::f\"\>", {380, -18},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -24}, {225, -12}]}, InsetBox["\<\"X::g2\"\>", {195, -18},
+      RectangleBox[{350, -36}, {410, -24}]}, InsetBox["\<\"X::g2\"\>", {380, -30},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
-    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[515, 2], 69}, {Rational[515, 2], 10}, {95, 
-        10}}, {{257.5, 69}, {257.5, 10}, {95, 10}}]]}, 
-    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[45, 2], 44}, {Rational[45, 2], 10}, {95, 
-        10}}, {{22.5, 44}, {22.5, 10}, {95, 10}}]]}, 
-    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[
-      NCache[{{Rational[95, 2], 59}, {Rational[95, 2], Rational[153, 2]}, {
-        245, Rational[153, 2]}}, {{47.5, 59}, {47.5, 76.5}, {245, 76.5}}]]}}},
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}}, {
+    {GrayLevel[0], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{460, 81}, {460, -12}, {410, -12}}]}, 
+    {GrayLevel[0], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{40, 56}, {40, 46}, {280, 46}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{110, 71}, {110, 96}, {430, 96}}]}}},
   Axes->False,
   Background->GrayLevel[1],
   Frame->False,
   ImagePadding->10,
-  ImageSize->{1162.4999999999575`, Automatic},
-  PlotRange->{{-20, 345}, {-50, 114}}]], "Output",
+  ImageSize->{840, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Output",
  CellChangeTimes->{
   3.9602769477474213`*^9, 3.960279710693657*^9, 3.960279781056181*^9, 
    3.960279966160473*^9, {3.9602804381767464`*^9, 3.960280448585314*^9}, 
@@ -360,9 +398,34 @@ Cell[BoxData[
    3.960438738227396*^9, 3.960438754660898*^9}, 3.9604389808952274`*^9, 
    3.96043965891243*^9, 3.9604398431290035`*^9, 3.9604433800464993`*^9, 
    3.9604440009940853`*^9, 3.960444211470278*^9, 3.96044502655324*^9, 
-   3.960445065692276*^9, 3.9604451953331223`*^9, 3.960446180003393*^9},
+   3.960445065692276*^9, 3.9604451953331223`*^9, 3.960446180003393*^9, 
+   3.9604466255162563`*^9, 3.9604502499026356`*^9, 3.960450759079197*^9, 
+   3.960450990792877*^9, 3.9604511529254017`*^9, 3.9604514010347767`*^9, 
+   3.9604519870612774`*^9, 3.9604531319164715`*^9, 3.960453422332409*^9, 
+   3.9604540131398754`*^9, {3.960454269121401*^9, 3.960454286492708*^9}, 
+   3.960454602375389*^9, 3.960454652765358*^9, 3.9604548703352375`*^9, 
+   3.9604583243220387`*^9, 3.9605289319238853`*^9, 3.9605290011541786`*^9, 
+   3.9605480150913982`*^9, 3.960548047487791*^9, 3.9606204315618725`*^9, 
+   3.9606209710860825`*^9, 3.9606213157968044`*^9, 3.96062166071344*^9, 
+   3.960621828380682*^9, 3.960621943049999*^9, 3.960621991877527*^9, 
+   3.9606226129373226`*^9, 3.960623241674919*^9, 3.9606232759144096`*^9, 
+   3.9606234117879143`*^9, 3.9606237957555256`*^9, 3.9606248802279854`*^9, 
+   3.9606260730618515`*^9, 3.9606269326786823`*^9, 3.9606272820852356`*^9, 
+   3.9606273205964375`*^9, 3.960636573096676*^9, 3.960636751040678*^9, 
+   3.960636838425501*^9, 3.9606373838932247`*^9, 3.960639392042883*^9, 
+   3.9606401728059044`*^9, 3.960699867955225*^9, 3.9606999893395195`*^9, 
+   3.960700073130909*^9, 3.960702382867941*^9, 3.9610499179125977`*^9, 
+   3.961050159910244*^9, 3.9611342153293724`*^9, 3.9611343346613655`*^9, 
+   3.961134369355335*^9, 3.9611346067698536`*^9, 3.96113810886796*^9, {
+   3.9611384397814407`*^9, 3.9611384482452164`*^9}, {3.9611406822090225`*^9, 
+   3.9611406870088596`*^9}, {3.9611413829016438`*^9, 3.9611413945592384`*^9}, 
+   3.9611471599845715`*^9, 3.9611472029424553`*^9, 3.961148276783594*^9, 
+   3.9612176899955215`*^9, 3.9612242471483574`*^9, 3.961224959504833*^9, 
+   3.9612490781269875`*^9, 3.9613018401877747`*^9, {3.961302960963537*^9, 
+   3.961302972171921*^9}, 3.9613045426525383`*^9, 3.961305147604719*^9, 
+   3.961305417615343*^9},
  CellLabel->
-  "Out[464]=",ExpressionUUID->"6689a6fe-a820-0e4c-b0f6-deb537f405b3"]
+  "Out[136]=",ExpressionUUID->"45f4d5ac-2833-6149-bb66-32c32629d33f"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -375,7 +438,7 @@ Cell[BoxData[
  CellChangeTimes->{{3.9590750832903004`*^9, 3.9590751058485794`*^9}, 
    3.960017953821436*^9, {3.9603485152952156`*^9, 3.9603485163790855`*^9}},
  CellLabel->
-  "In[465]:=",ExpressionUUID->"61e7fdc5-674f-2047-9069-82b8b392a842"],
+  "In[137]:=",ExpressionUUID->"61e7fdc5-674f-2047-9069-82b8b392a842"],
 
 Cell[BoxData[
  RowBox[{"\[LeftAssociation]", 
@@ -429,7 +492,7 @@ Cell[BoxData[
             RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
-            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Y2\"\>"}], ",", 
+            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"X\"\>"}], ",", 
             RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
              RowBox[{"{", 
               RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
@@ -446,8 +509,9 @@ Cell[BoxData[
        RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
        RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
         RowBox[{"{", 
-         RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
-      "\[RightAssociation]"}], "}"}]}], ",", 
+         RowBox[{"\<\"Y2::f\"\>", ",", "\<\"Y2::g2\"\>"}], "}"}]}], ",", 
+       RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+        RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}], "}"}]}], ",", 
    RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "16"}], ",", 
    RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
    RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
@@ -470,105 +534,133 @@ Cell[BoxData[
    3.960438755164814*^9}, 3.960438981730131*^9, 3.9604396614940968`*^9, 
    3.9604398440858345`*^9, 3.9604433809285545`*^9, 3.9604440025113907`*^9, 
    3.9604442121872597`*^9, 3.9604450288701077`*^9, 3.9604450663623924`*^9, 
-   3.9604451960042095`*^9, 3.9604461804978313`*^9},
+   3.9604451960042095`*^9, 3.9604461804978313`*^9, 3.96044662641214*^9, 
+   3.9604502505402985`*^9, 3.96045099213019*^9, 3.9604511538050117`*^9, 
+   3.9604514016982956`*^9, 3.960451987614916*^9, 3.9604531325468616`*^9, 
+   3.960453422830942*^9, 3.960454013701912*^9, {3.960454269597643*^9, 
+   3.960454287151308*^9}, 3.9604546029568634`*^9, 3.9604546533129597`*^9, 
+   3.9604548709224834`*^9, 3.9605289320339108`*^9, 3.9605290016071014`*^9, 
+   3.960548015663759*^9, 3.9605480479556866`*^9, 3.960620431713293*^9, 
+   3.960620971490679*^9, 3.960621316299696*^9, 3.9606216611819096`*^9, 
+   3.9606218288766594`*^9, 3.9606219434579544`*^9, 3.960621992543907*^9, 
+   3.9606226136163063`*^9, 3.9606232422101707`*^9, 3.960623276053156*^9, 
+   3.9606234121806984`*^9, 3.96062379620286*^9, 3.960624880650835*^9, 
+   3.9606260734886894`*^9, 3.960626933134487*^9, 3.960627282204357*^9, 
+   3.9606273211549797`*^9, 3.9606365731566525`*^9, 3.9606367514627857`*^9, 
+   3.9606368389120617`*^9, 3.960637384329775*^9, 3.960639392539936*^9, 
+   3.960640173372225*^9, 3.960699868408352*^9, 3.960699989954548*^9, 
+   3.9607000737475433`*^9, 3.960702383535969*^9, 3.961049960387985*^9, 
+   3.961050160314625*^9, 3.9611342162768574`*^9, 3.961134369872034*^9, 
+   3.9611346088812103`*^9, 3.9611382130589447`*^9, {3.961138440194908*^9, 
+   3.9611384498807583`*^9}, 3.96114716289168*^9, 3.9611472029932423`*^9, 
+   3.9611482772873077`*^9, 3.9612242475887585`*^9, 3.9612249613826847`*^9, 
+   3.9612490861222076`*^9, 3.961301840639717*^9, {3.9613029614225883`*^9, 
+   3.9613029725619087`*^9}, 3.961304544658394*^9, 3.9613051480190487`*^9, 
+   3.9613054179840946`*^9},
  CellLabel->
-  "Out[465]=",ExpressionUUID->"3fa74dc5-dee9-d142-b29b-4d6257fd8b7a"]
+  "Out[137]=",ExpressionUUID->"5658b738-4b4f-b74c-b424-976c45196c0f"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"\t", "\[IndentingNewLine]", 
+ RowBox[{"\[IndentingNewLine]", "\[IndentingNewLine]", 
   RowBox[{"DrawClassDiagram", "[", "layoutY2", "]"}]}]], "Input",
  CellChangeTimes->{{3.9590751099744396`*^9, 3.9590751249741077`*^9}, 
-   3.9591535425543976`*^9},
+   3.9591535425543976`*^9, {3.9604519880447693`*^9, 3.960451988588766*^9}},
  CellLabel->
-  "In[466]:=",ExpressionUUID->"e8db006f-c151-6a42-abe4-9983a640570d"],
+  "In[138]:=",ExpressionUUID->"e8db006f-c151-6a42-abe4-9983a640570d"],
 
 Cell[BoxData[
  GraphicsBox[{{{
-     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.003], 
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
       Dashing[{Small, Small}]}], FaceForm[None], 
-      RectangleBox[{245, 69}, {295, 84}]}, 
-     InsetBox["\<\"Virtual Base: X\"\>", {270, 57},
+      RectangleBox[{430, 69}, {610, 84}]}, 
+     InsetBox["\<\"Virtual Base: X\"\>", {520, 57},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
-        FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 0.7, 0.7]], RectangleBox[{245, 69}, {270, 84}]}, 
-     InsetBox["\<\"vptr\"\>", 
-      NCache[{Rational[515, 2], Rational[153, 2]}, {257.5, 76.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontColor -> 
+        RGBColor[0, 0, 1], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{430, 69}, {490, 84}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{460, Rational[153, 2]}, {460, 76.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{270, 69}, {295, 84}]}, 
-     InsetBox["\<\"X\"\>", 
-      NCache[{Rational[565, 2], Rational[153, 2]}, {282.5, 76.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{490, 69}, {610, 84}]}, 
+     InsetBox["\<\"X\"\>", NCache[{550, Rational[153, 2]}, {550, 76.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.003]}], FaceForm[None], 
-      RectangleBox[{10, 44}, {85, 59}]}, 
-     InsetBox["\<\"Object: Y2\"\>", NCache[{Rational[95, 2], 74}, {47.5, 74}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 44}, {270, 59}]}, InsetBox["\<\"Object: Y2\"\>", {140, 74},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 0.7, 0.7]], RectangleBox[{10, 44}, {35, 59}]}, 
-     InsetBox["\<\"vptr\"\>", 
-      NCache[{Rational[45, 2], Rational[103, 2]}, {22.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{10, 44}, {70, 59}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{40, Rational[103, 2]}, {40, 51.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      0.6, 0.6, 1]], RectangleBox[{35, 44}, {60, 59}]}, 
-     InsetBox["\<\"vbase:X\"\>", 
-      NCache[{Rational[95, 2], Rational[103, 2]}, {47.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      0.6, 0.6, 1]], RectangleBox[{70, 44}, {150, 59}]}, 
+     InsetBox["\<\"vbase:X\"\>", NCache[{110, Rational[103, 2]}, {110, 51.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{60, 44}, {85, 59}]}, 
-     InsetBox["\<\"Y2\"\>", 
-      NCache[{Rational[145, 2], Rational[103, 2]}, {72.5, 51.5}],
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{150, 44}, {270, 59}]}, 
+     InsetBox["\<\"Y2\"\>", NCache[{210, Rational[103, 2]}, {210, 51.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 34}]}, InsetBox["\<\"VTable: Y2\"\>", {125, 39},
+      RectangleBox[{280, 10}, {340, 34}]}, InsetBox["\<\"VTable: Y2\"\>", {310, 39},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 22}, {155, 34}]}, InsetBox["\<\"Y2::f\"\>", {125, 28},
+      RectangleBox[{280, 22}, {340, 34}]}, InsetBox["\<\"Y2::f\"\>", {310, 28},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 22}]}, InsetBox["\<\"Y2::g2\"\>", {125, 16},
+      RectangleBox[{280, 10}, {340, 22}]}, InsetBox["\<\"Y2::g2\"\>", {310, 16},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -24}, {225, 0}]}, InsetBox["\<\"VTable: X\"\>", {195, 5},
+      RectangleBox[{350, -24}, {410, 0}]}, InsetBox["\<\"VTable: X\"\>", {380, 5},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -12}, {225, 0}]}, InsetBox["\<\"X::f\"\>", {195, -6},
+      RectangleBox[{350, -12}, {410, 0}]}, InsetBox["\<\"Y2::f\"\>", {380, -6},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -24}, {225, -12}]}, InsetBox["\<\"X::g2\"\>", {195, -18},
+      RectangleBox[{350, -24}, {410, -12}]}, InsetBox["\<\"Y2::g2\"\>", {380, -18},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
-    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[515, 2], 69}, {Rational[515, 2], 10}, {95, 
-        10}}, {{257.5, 69}, {257.5, 10}, {95, 10}}]]}, 
-    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[45, 2], 44}, {Rational[45, 2], 10}, {95, 
-        10}}, {{22.5, 44}, {22.5, 10}, {95, 10}}]]}, 
-    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[
-      NCache[{{Rational[95, 2], 59}, {Rational[95, 2], Rational[153, 2]}, {
-        245, Rational[153, 2]}}, {{47.5, 59}, {47.5, 76.5}, {245, 76.5}}]]}}},
+       FontFamily -> "Courier", FontSize -> Rational[640, 61], FontWeight -> 
+        Bold}]}}, {
+    {GrayLevel[0], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{460, 69}, {460, 0}, {410, 0}}]}, 
+    {GrayLevel[0], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{40, 44}, {40, 34}, {280, 34}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.001639344262295082], 
+     Arrowheads[{0, 0.019672131147540982`}], 
+     ArrowBox[{{110, 59}, {110, 84}, {430, 84}}]}}},
   Axes->False,
   Background->GrayLevel[1],
   Frame->False,
   ImagePadding->10,
-  ImageSize->{800, 600},
-  PlotRange->{{-20, 345}, {-50, 114}}]], "Output",
+  ImageSize->{840, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Output",
  CellChangeTimes->{
   3.960279972223982*^9, 3.96028045950906*^9, 3.9602805962723255`*^9, {
    3.9602808365845222`*^9, 3.960280842572708*^9}, 3.9602809753612385`*^9, 
@@ -585,9 +677,31 @@ Cell[BoxData[
    3.9604387403407307`*^9, 3.9604387556652927`*^9}, 3.9604389823189144`*^9, 
    3.9604396619820995`*^9, 3.9604398447371044`*^9, 3.960443381389433*^9, 
    3.96044400315633*^9, 3.96044502942379*^9, 3.9604450669283943`*^9, 
-   3.9604451966169624`*^9, 3.960446181765995*^9},
+   3.9604451966169624`*^9, 3.960446181765995*^9, 3.960446627173088*^9, 
+   3.960450251078861*^9, 3.960450992889555*^9, 3.9604511542961483`*^9, 
+   3.960451402276396*^9, 3.9604519900601673`*^9, 3.960453133071291*^9, 
+   3.960453423262554*^9, 3.9604540141276894`*^9, {3.9604542699396877`*^9, 
+   3.9604542877254696`*^9}, 3.9604546032965527`*^9, 3.960454653757206*^9, 
+   3.9604548715504456`*^9, 3.960458330053341*^9, 3.9605289325229053`*^9, 
+   3.960529002653284*^9, 3.960548016042492*^9, 3.960548048499592*^9, 
+   3.9606204321847153`*^9, 3.960620971556589*^9, 3.960621316702423*^9, 
+   3.96062166162232*^9, 3.9606218292947083`*^9, 3.9606219437670536`*^9, 
+   3.9606219929145546`*^9, 3.9606226141668987`*^9, 3.960623242621456*^9, 
+   3.9606232761689186`*^9, 3.9606234126037464`*^9, 3.9606237966236515`*^9, 
+   3.9606248815198193`*^9, 3.9606260738295097`*^9, 3.9606269336106358`*^9, 
+   3.960627282263897*^9, 3.9606273217984123`*^9, 3.960636573201666*^9, 
+   3.9606367518981667`*^9, 3.9606368392151775`*^9, 3.9606373848149986`*^9, 
+   3.960639393086857*^9, 3.9606401739032936`*^9, 3.960699868757721*^9, 
+   3.9606999909535656`*^9, 3.9607000741606865`*^9, 3.9607023836525993`*^9, 
+   3.961049961282339*^9, 3.9610501613907185`*^9, 3.9611342173108807`*^9, 
+   3.9611343703928375`*^9, 3.96113460934865*^9, 3.9611382137019444`*^9, 
+   3.9611384504005947`*^9, 3.9611471633046227`*^9, 3.961147203033762*^9, 
+   3.961148277626234*^9, 3.961224248253683*^9, 3.9612249632825737`*^9, 
+   3.9612490869041862`*^9, 3.9613018410694237`*^9, {3.9613029618870487`*^9, 
+   3.961302972939417*^9}, 3.961304545109833*^9, 3.9613051523730736`*^9, 
+   3.9613054183670692`*^9},
  CellLabel->
-  "Out[466]=",ExpressionUUID->"b79e53cd-f4a2-3d4f-b7ce-454f79d522db"]
+  "Out[138]=",ExpressionUUID->"e9d8c5d3-9e0a-fd43-bd79-aa5f10af3f4d"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -601,7 +715,7 @@ Cell[BoxData[
    3.959074854936695*^9, 3.9590748751125546`*^9}, 3.960017990187748*^9, {
    3.960445030331642*^9, 3.9604450328808517`*^9}},
  CellLabel->
-  "In[467]:=",ExpressionUUID->"bc1396e6-0073-624b-b127-861c4ccab63b"],
+  "In[139]:=",ExpressionUUID->"bc1396e6-0073-624b-b127-861c4ccab63b"],
 
 Cell[BoxData[
  RowBox[{"\[LeftAssociation]", 
@@ -630,8 +744,9 @@ Cell[BoxData[
              RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Z\"\>"}], ",", 
              RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
               RowBox[{"{", 
-               RowBox[{"\<\"Y1::f\"\>", ",", "\<\"Y1::g1\"\>"}], "}"}]}]}], 
-            "\[RightAssociation]"}], ",", 
+               
+               RowBox[{"\<\"Z::f\"\>", ",", "\<\"Z::g1\"\>", 
+                ",", "\<\"Y2::g2\"\>"}], "}"}]}]}], "\[RightAssociation]"}], ",", 
            RowBox[{"\[LeftAssociation]", 
             RowBox[{
              RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:X\"\>"}], ",", 
@@ -667,10 +782,10 @@ Cell[BoxData[
              RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
              RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
              RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
-             RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Z\"\>"}], ",", 
+             RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Y2\"\>"}], ",", 
              RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
               RowBox[{"{", 
-               RowBox[{"\<\"Y2::f\"\>", ",", "\<\"Y2::g2\"\>"}], "}"}]}]}], 
+               RowBox[{"\<\"Z::f\"\>", ",", "\<\"Y2::g2\"\>"}], "}"}]}]}], 
             "\[RightAssociation]"}], ",", 
            RowBox[{"\[LeftAssociation]", 
             RowBox[{
@@ -713,7 +828,7 @@ Cell[BoxData[
             RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
-            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"Z\"\>"}], ",", 
+            RowBox[{"\<\"ClassOfVtable\"\>", "\[Rule]", "\<\"X\"\>"}], ",", 
             RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
              RowBox[{"{", 
               RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
@@ -730,24 +845,47 @@ Cell[BoxData[
        RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
        RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
         RowBox[{"{", 
-         RowBox[{"\<\"X::f\"\>", ",", "\<\"X::g2\"\>"}], "}"}]}]}], 
-      "\[RightAssociation]"}], "}"}]}], ",", 
+         RowBox[{"\<\"Z::f\"\>", ",", "\<\"Y2::g2\"\>"}], "}"}]}], ",", 
+       RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+        RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}], "}"}]}], ",", 
    RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "32"}], ",", 
    RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
    RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
     RowBox[{"{", 
      RowBox[{"\<\"Z::f\"\>", ",", "\<\"Z::g1\"\>", ",", "\<\"Y2::g2\"\>"}], 
      "}"}]}]}], "\[RightAssociation]"}]], "Output",
- CellChangeTimes->{3.9603452864263*^9, 3.960346097592537*^9, 
-  3.9603473093111534`*^9, 3.960347380435669*^9, 3.9603485273127365`*^9, 
-  3.9603596334560547`*^9, 3.9603637950320663`*^9, 3.96036667048168*^9, 
-  3.9603703809870377`*^9, 3.960373473499426*^9, 3.9604368031456013`*^9, 
-  3.960438252130741*^9, 3.9604387088204613`*^9, 3.9604387561632214`*^9, 
-  3.9604389828740635`*^9, 3.9604396624507465`*^9, 3.960439845341898*^9, 
-  3.960443381814804*^9, 3.960444003701248*^9, 3.960445067432287*^9, 
-  3.9604451973023643`*^9, 3.9604461823962917`*^9},
+ CellChangeTimes->{
+  3.9603452864263*^9, 3.960346097592537*^9, 3.9603473093111534`*^9, 
+   3.960347380435669*^9, 3.9603485273127365`*^9, 3.9603596334560547`*^9, 
+   3.9603637950320663`*^9, 3.96036667048168*^9, 3.9603703809870377`*^9, 
+   3.960373473499426*^9, 3.9604368031456013`*^9, 3.960438252130741*^9, 
+   3.9604387088204613`*^9, 3.9604387561632214`*^9, 3.9604389828740635`*^9, 
+   3.9604396624507465`*^9, 3.960439845341898*^9, 3.960443381814804*^9, 
+   3.960444003701248*^9, 3.960445067432287*^9, 3.9604451973023643`*^9, 
+   3.9604461823962917`*^9, 3.960446627953453*^9, 3.9604502515666523`*^9, 
+   3.960450996837534*^9, 3.960451154901943*^9, 3.9604514027413597`*^9, 
+   3.960452001498995*^9, 3.960453133623516*^9, 3.9604534237793865`*^9, 
+   3.96045401456682*^9, {3.9604542704895325`*^9, 3.9604542885033627`*^9}, 
+   3.9604546072725983`*^9, 3.960454654204458*^9, 3.960454872189968*^9, 
+   3.9604583305553455`*^9, 3.960528933030077*^9, 3.960529003110962*^9, 
+   3.960548016619131*^9, 3.9605480490528927`*^9, 3.96062043275062*^9, 
+   3.9606209720191383`*^9, 3.96062131717741*^9, 3.960621662150463*^9, 
+   3.9606218293466244`*^9, 3.960621944183466*^9, 3.9606219929755535`*^9, 
+   3.960622614253252*^9, 3.9606232431333237`*^9, 3.9606232762626724`*^9, 
+   3.960623413023203*^9, 3.960623797055336*^9, 3.9606248820359287`*^9, 
+   3.960626074209671*^9, 3.9606269340393963`*^9, 3.960627282341007*^9, 
+   3.9606273224116535`*^9, 3.9606365732406693`*^9, 3.9606367523472595`*^9, 
+   3.96063683966362*^9, 3.9606373852818966`*^9, 3.9606393936162415`*^9, 
+   3.960640174366888*^9, 3.9606998698458138`*^9, 3.9606999924307556`*^9, 
+   3.9607000747898808`*^9, 3.96070238426235*^9, 3.9610499698825016`*^9, 
+   3.9610501618929043`*^9, 3.9611342178384075`*^9, 3.961134609751381*^9, 
+   3.961138214585121*^9, 3.961138451036207*^9, 3.9611471637593136`*^9, 
+   3.9611472030615177`*^9, 3.9611482780547333`*^9, 3.961224248611513*^9, 
+   3.9612249638172436`*^9, 3.961249088705105*^9, 3.961301841531561*^9, {
+   3.9613029623441563`*^9, 3.961302973302412*^9}, 3.961304545639305*^9, 
+   3.961305152845381*^9, 3.9613054187617607`*^9},
  CellLabel->
-  "Out[467]=",ExpressionUUID->"496d7e2e-ce4e-334d-b2bd-42f58584c357"]
+  "Out[139]=",ExpressionUUID->"1736dfdb-b6c3-3644-9784-a11e8afcaca7"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -759,149 +897,160 @@ Cell[BoxData[
  CellChangeTimes->{{3.959074749227783*^9, 3.9590747775678024`*^9}, {
   3.9603436643153954`*^9, 3.960343665270954*^9}},
  CellLabel->
-  "In[468]:=",ExpressionUUID->"28f7608e-5833-6b4f-aaae-0cde0699f655"],
+  "In[140]:=",ExpressionUUID->"28f7608e-5833-6b4f-aaae-0cde0699f655"],
 
 Cell[BoxData[
  GraphicsBox[{{{
-     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.003], 
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
       Dashing[{Small, Small}]}], FaceForm[None], 
-      RectangleBox[{245, 81}, {295, 96}]}, 
-     InsetBox["\<\"Virtual Base: X\"\>", {270, 69},
+      RectangleBox[{880, 81}, {1060, 96}]}, 
+     InsetBox["\<\"Virtual Base: X\"\>", {970, 69},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontColor -> RGBColor[0, 0, 1], 
-        FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 0.7, 0.7]], RectangleBox[{245, 81}, {270, 96}]}, 
-     InsetBox["\<\"vptr\"\>", 
-      NCache[{Rational[515, 2], Rational[177, 2]}, {257.5, 88.5}],
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontColor -> 
+        RGBColor[0, 0, 1], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      1, 0.7, 0.7]], RectangleBox[{880, 81}, {940, 96}]}, 
+     InsetBox["\<\"vptr\"\>", NCache[{910, Rational[177, 2]}, {910, 88.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{270, 81}, {295, 96}]}, 
-     InsetBox["\<\"X\"\>", 
-      NCache[{Rational[565, 2], Rational[177, 2]}, {282.5, 88.5}],
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{940, 81}, {1060, 96}]}, 
+     InsetBox["\<\"X\"\>", NCache[{1000, Rational[177, 2]}, {1000, 88.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.003]}], FaceForm[None], 
-      RectangleBox[{10, 56}, {85, 71}]}, 
-     InsetBox["\<\"Object: Z\"\>", NCache[{Rational[95, 2], 86}, {47.5, 86}],
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 56}, {650, 71}]}, InsetBox["\<\"Object: Z\"\>", {330, 86},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 1, 0.9]], RectangleBox[{10, 56}, {35, 71}]}, 
-     InsetBox["\<\"Y1\"\>", 
-      NCache[{Rational[45, 2], Rational[127, 2]}, {22.5, 63.5}],
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{10, 56}, {270, 71}]}, 
+      InsetBox["\<\"Y1\"\>", NCache[{140, Rational[127, 2]}, {140, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{10, 56}, {70, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{40, Rational[127, 2]}, {40, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{70, 56}, {150, 71}]}, 
+      InsetBox["\<\"vbase:X\"\>", NCache[{110, Rational[127, 2]}, {110, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{150, 56}, {270, 71}]}, 
+      InsetBox["\<\"Y1\"\>", NCache[{210, Rational[127, 2]}, {210, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{270, 56}, {530, 71}]}, 
+      InsetBox["\<\"Y2\"\>", NCache[{400, Rational[127, 2]}, {400, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 0.7, 0.7]], RectangleBox[{270, 56}, {330, 71}]}, 
+      InsetBox["\<\"vptr\"\>", NCache[{300, Rational[127, 2]}, {300, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{330, 56}, {410, 71}]}, 
+      InsetBox["\<\"vbase:X\"\>", NCache[{370, Rational[127, 2]}, {370, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{410, 56}, {530, 71}]}, 
+      InsetBox["\<\"Y2\"\>", NCache[{470, Rational[127, 2]}, {470, 63.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+         Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{530, 56}, {650, 71}]}, 
+     InsetBox["\<\"Z\"\>", NCache[{590, Rational[127, 2]}, {590, 63.5}],
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {{
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[RGBColor[
-        1, 0.7, 0.7]], 
-        RectangleBox[{10, 58}, 
-         NCache[{Rational[55, 3], 69}, {18.333333333333332`, 69}]]}, 
-       InsetBox["\<\"vptr\"\>", 
-        NCache[{Rational[85, 6], Rational[127, 2]}, {14.166666666666666`, 
-         63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[RGBColor[
-        0.6, 0.6, 1]], 
-        RectangleBox[NCache[{Rational[55, 3], 58}, {18.333333333333332`, 58}],
-          NCache[{Rational[80, 3], 69}, {26.666666666666668`, 69}]]}, 
-       InsetBox["\<\"vbase:X\"\>", 
-        NCache[{Rational[45, 2], Rational[127, 2]}, {22.5, 63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[GrayLevel[0.8]], 
-        RectangleBox[
-         NCache[{Rational[80, 3], 58}, {26.666666666666668`, 58}], {35, 69}]},
-        InsetBox["\<\"Y1\"\>", 
-        NCache[{Rational[185, 6], Rational[127, 2]}, {30.833333333333332`, 
-         63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[RGBColor[
-      1, 1, 0.9]], RectangleBox[{35, 56}, {60, 71}]}, 
-     InsetBox["\<\"Y2\"\>", 
-      NCache[{Rational[95, 2], Rational[127, 2]}, {47.5, 63.5}],
-      BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {{
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[RGBColor[
-        1, 0.7, 0.7]], 
-        RectangleBox[{35, 58}, 
-         NCache[{Rational[130, 3], 69}, {43.333333333333336`, 69}]]}, 
-       InsetBox["\<\"vptr\"\>", 
-        NCache[{Rational[235, 6], Rational[127, 2]}, {39.166666666666664`, 
-         63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[RGBColor[
-        0.6, 0.6, 1]], 
-        RectangleBox[
-         NCache[{Rational[130, 3], 58}, {43.333333333333336`, 58}], 
-         NCache[{Rational[155, 3], 69}, {51.666666666666664`, 69}]]}, 
-       InsetBox["\<\"vbase:X\"\>", 
-        NCache[{Rational[95, 2], Rational[127, 2]}, {47.5, 63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
-       {EdgeForm[{GrayLevel[0], Thickness[0.001]}], FaceForm[GrayLevel[0.8]], 
-        RectangleBox[
-         NCache[{Rational[155, 3], 58}, {
-          51.666666666666664`, 58}], {60, 69}]}, 
-       InsetBox["\<\"Y2\"\>", 
-        NCache[{Rational[335, 6], Rational[127, 2]}, {55.833333333333336`, 
-         63.5}],
-        BaseStyle->{
-         FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}}}, {
-     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[0.8]], 
-      RectangleBox[{60, 56}, {85, 71}]}, 
-     InsetBox["\<\"Z\"\>", 
-      NCache[{Rational[145, 2], Rational[127, 2]}, {72.5, 63.5}],
-      BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}], {}}, {
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 46}]}, InsetBox["\<\"VTable: Z\"\>", {125, 51},
+      RectangleBox[{660, 10}, {720, 46}]}, InsetBox["\<\"VTable: Z\"\>", {690, 51},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 34}, {155, 46}]}, InsetBox["\<\"Z::f\"\>", {125, 40},
+      RectangleBox[{660, 34}, {720, 46}]}, InsetBox["\<\"Z::f\"\>", {690, 40},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 22}, {155, 34}]}, InsetBox["\<\"Z::g1\"\>", {125, 28},
+      RectangleBox[{660, 22}, {720, 34}]}, InsetBox["\<\"Z::g1\"\>", {690, 28},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{95, 10}, {155, 22}]}, InsetBox["\<\"Y2::g2\"\>", {125, 16},
+      RectangleBox[{660, 10}, {720, 22}]}, InsetBox["\<\"Y2::g2\"\>", {690, 16},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -36}, {225, -12}]}, InsetBox["\<\"VTable: X\"\>", {195, -7},
+      RectangleBox[{730, -36}, {790, -12}]}, InsetBox["\<\"VTable: X\"\>", {760, -7},
       BaseStyle->{
-       FontFamily -> "Arial", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -24}, {225, -12}]}, InsetBox["\<\"X::f\"\>", {195, -18},
+      RectangleBox[{730, -24}, {790, -12}]}, InsetBox["\<\"Z::f\"\>", {760, -18},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}, {
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
      {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
-      RectangleBox[{165, -36}, {225, -24}]}, InsetBox["\<\"X::g2\"\>", {195, -30},
+      RectangleBox[{730, -36}, {790, -24}]}, InsetBox["\<\"Y2::g2\"\>", {760, -30},
       BaseStyle->{
-       FontFamily -> "Courier", FontSize -> 8, FontWeight -> Bold}]}}, {
-    {GrayLevel[0], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[515, 2], 81}, {Rational[515, 2], 10}, {95, 
-        10}}, {{257.5, 81}, {257.5, 10}, {95, 10}}]]}, 
-    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[45, 2], 71}, {
-        Rational[45, 2], Rational[177, 2]}, {245, Rational[177, 2]}}, {{
-        22.5, 71}, {22.5, 88.5}, {245, 88.5}}]]}, 
-    {RGBColor[0, 0, 1], Thickness[0.003], Arrowheads[{0, 0.03}], 
-     ArrowBox[NCache[{{Rational[95, 2], 71}, {
-        Rational[95, 2], Rational[177, 2]}, {245, Rational[177, 2]}}, {{
-        47.5, 71}, {47.5, 88.5}, {245, 88.5}}]]}}},
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{800, -70}, {860, -46}]}, InsetBox["\<\"VTable: Y2\"\>", {830, -41},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{800, -58}, {860, -46}]}, InsetBox["\<\"Z::f\"\>", {830, -52},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{800, -70}, {860, -58}]}, InsetBox["\<\"Y2::g2\"\>", {830, -64},
+      BaseStyle->{
+       FontFamily -> "Courier", FontSize -> Rational[320, 53], FontWeight -> 
+        Bold}]}}, {
+    {GrayLevel[0], Thickness[0.0009433962264150945], 
+     Arrowheads[{0, 0.011320754716981133`}], 
+     ArrowBox[{{910, 81}, {910, -12}, {790, -12}}]}, 
+    {GrayLevel[0], Thickness[0.0009433962264150945], 
+     Arrowheads[{0, 0.011320754716981133`}], 
+     ArrowBox[{{40, 56}, {40, 46}, {660, 46}}]}, 
+    {GrayLevel[0], Thickness[0.0009433962264150945], 
+     Arrowheads[{0, 0.011320754716981133`}], 
+     ArrowBox[{{300, 56}, {300, -46}, {800, -46}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.0009433962264150945], 
+     Arrowheads[{0, 0.011320754716981133`}], 
+     ArrowBox[{{110, 71}, {110, 96}, {880, 96}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.0009433962264150945], 
+     Arrowheads[{0, 0.011320754716981133`}], 
+     ArrowBox[{{370, 71}, {370, 96}, {880, 96}}]}}},
   Axes->False,
   Background->GrayLevel[1],
   Frame->False,
   ImagePadding->10,
-  ImageSize->{1217.4999999999814`, 913.1249999999859},
-  PlotRange->{{-20, 345}, {-50, 126}}]], "Output",
+  ImageSize->{1220, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Output",
  CellChangeTimes->{
   3.9602810831850643`*^9, 3.9602814731688614`*^9, 3.960282332861412*^9, 
    3.9602828006579933`*^9, 3.9602834974586773`*^9, 3.9602847056588955`*^9, 
@@ -914,9 +1063,30 @@ Cell[BoxData[
    3.9603734742325096`*^9, 3.9604368037311745`*^9, 3.9604382527123623`*^9, 
    3.960438709285448*^9, 3.960438756658451*^9, 3.9604389850401535`*^9, 
    3.9604396633860207`*^9, 3.9604398462095833`*^9, 3.960443382569109*^9, 
-   3.960444004138851*^9, 3.960445197876436*^9, 3.9604461830772915`*^9},
+   3.960444004138851*^9, 3.960445197876436*^9, 3.9604461830772915`*^9, 
+   3.9604466286282463`*^9, 3.960450252077381*^9, 3.9604509976228333`*^9, 
+   3.960451155842396*^9, 3.9604514032214375`*^9, 3.960452002263994*^9, 
+   3.960453134064291*^9, 3.9604534241824665`*^9, 3.960454015038719*^9, {
+   3.9604542708369923`*^9, 3.960454289138727*^9}, 3.960454607818041*^9, 
+   3.9604546546286983`*^9, 3.9604548729012394`*^9, 3.960458330986643*^9, 
+   3.9605289333809624`*^9, 3.9605290036873817`*^9, 3.9605480171572533`*^9, 
+   3.9605480495091743`*^9, 3.960620433608143*^9, 3.9606209723447475`*^9, 
+   3.960621317480751*^9, 3.960621662533348*^9, 3.9606218296918106`*^9, 
+   3.96062194449049*^9, 3.960621993048649*^9, 3.960622614636675*^9, 
+   3.9606232435693703`*^9, 3.9606232763722763`*^9, 3.9606234139484615`*^9, 
+   3.960623797470709*^9, 3.9606248825184765`*^9, 3.9606260746257095`*^9, 
+   3.9606269344496403`*^9, 3.96062728243754*^9, 3.9606273230130806`*^9, 
+   3.960636573297291*^9, 3.9606367527421703`*^9, 3.960636839970911*^9, 
+   3.960637385728691*^9, 3.9606393941215725`*^9, 3.960640174798897*^9, 
+   3.9606998703280373`*^9, 3.9606999951870728`*^9, 3.9607000749317303`*^9, 
+   3.9607023846996803`*^9, 3.9610499706413574`*^9, 3.9610501653828793`*^9, 
+   3.961134218228239*^9, 3.9611346106960335`*^9, 3.9611382157842197`*^9, 
+   3.961138451525446*^9, 3.961147164118292*^9, 3.96114720311108*^9, 
+   3.9612242490207253`*^9, 3.9612249642253666`*^9, 3.961249089748186*^9, 
+   3.9613018419536953`*^9, {3.9613029630590496`*^9, 3.9613029736185513`*^9}, 
+   3.961304549067217*^9, 3.961305155967188*^9, 3.961305419104393*^9},
  CellLabel->
-  "Out[468]=",ExpressionUUID->"b89df911-e948-1f40-82f6-4a24e1644439"]
+  "Out[140]=",ExpressionUUID->"423ba06e-4996-b04b-bafb-fca302b5265f"]
 }, Open  ]],
 
 Cell[BoxData[
@@ -926,50 +1096,851 @@ Cell[BoxData[
    "ParseCppToClasses", "[", "\"\<previos_exam_examples/Q2_W23-24_B.hpp\>\"", 
     "]"}]}], ";"}]], "Input",
  CellChangeTimes->{{3.9602809902731686`*^9, 3.9602810131370316`*^9}, 
-   3.960281088279394*^9, {3.9604462627188663`*^9, 
-   3.9604462741058655`*^9}},ExpressionUUID->"0d02adb0-44ba-4e46-ba4c-\
-48e708b46aab"],
-
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.9602798077626247`*^9, 3.9602798077677746`*^9}},
+   3.960281088279394*^9, {3.9604462627188663`*^9, 3.9604462741058655`*^9}},
  CellLabel->
-  "In[408]:=",ExpressionUUID->"dbed4ddb-b4e2-ed4a-b30d-c8975444e2ab"],
+  "In[141]:=",ExpressionUUID->"0d02adb0-44ba-4e46-ba4c-48e708b46aab"],
 
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.960276046514244*^9, 
-  3.960276046519808*^9}},ExpressionUUID->"8c1bbb5f-805d-6b4b-9462-\
-b576ab7449ec"],
+Cell[CellGroupData[{
 
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.9602757559606266`*^9, 3.960275817885868*^9}, {
-  3.9602760417316723`*^9, 
-  3.9602760472481747`*^9}},ExpressionUUID->"847c4cca-3322-444a-81b7-\
-8643695c5320"],
-
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.960275590503996*^9, 
-  3.9602756488301315`*^9}},ExpressionUUID->"9cf69ac4-1158-cf43-ada8-\
-47737bdab69e"],
-
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.960275451469696*^9, 
-  3.9602755586411495`*^9}},ExpressionUUID->"cb4b6eb1-89eb-3443-9f55-\
-0287e3f0a3ff"],
-
-Cell[BoxData["\[IndentingNewLine]"], "Input",
- CellChangeTimes->{3.9591534312449303`*^9},
+Cell[BoxData[
+ RowBox[{"layoutD", " ", "=", "  ", 
+  RowBox[{"ComputeClassLayout", "[", 
+   RowBox[{"classes", ",", "\"\<D\>\""}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.9602798077626247`*^9, 3.9602798077677746`*^9}, {
+  3.960446284467455*^9, 3.9604463007330685`*^9}},
  CellLabel->
-  "In[292]:=",ExpressionUUID->"2bdeb78a-af28-9443-a9b6-741402616244"],
+  "In[142]:=",ExpressionUUID->"dbed4ddb-b4e2-ed4a-b30d-c8975444e2ab"],
 
-Cell[BoxData["\[IndentingNewLine]"], "Input",
- CellChangeTimes->{3.959153431549532*^9},
- CellLabel->
-  "In[348]:=",ExpressionUUID->"884abc6d-b931-2a43-ad50-1d27e1043a13"],
-
-Cell[BoxData["\[IndentingNewLine]"], "Input",
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{
+   RowBox[{"\<\"ClassName\"\>", "\[Rule]", "\<\"D\"\>"}], ",", 
+   RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\[LeftAssociation]", 
+       RowBox[{
+        RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:C\"\>"}], ",", 
+        RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"VbaseSlot\"\>"}], ",", 
+        RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+        RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"IsVirtualBase\"\>", "\[Rule]", "True"}], ",", 
+        RowBox[{"\<\"VBaseOf\"\>", "\[Rule]", "\<\"C\"\>"}]}], 
+       "\[RightAssociation]"}], ",", 
+      RowBox[{"\[LeftAssociation]", 
+       RowBox[{
+        RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B2\"\>"}], ",", 
+        RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"NonVirtualBase\"\>"}], ",", 
+        RowBox[{"\<\"Offset\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"\[LeftAssociation]", 
+            RowBox[{
+             RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:A\"\>"}], ",", 
+             RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"VbaseSlot\"\>"}], ",", 
+             RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"IsVirtualBase\"\>", "\[Rule]", "True"}], ",", 
+             RowBox[{"\<\"VBaseOf\"\>", "\[Rule]", "\<\"A\"\>"}]}], 
+            "\[RightAssociation]"}], ",", 
+           RowBox[{"\[LeftAssociation]", 
+            RowBox[{
+             RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B2\"\>"}], ",", 
+             RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+             RowBox[{"\<\"Offset\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+             RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+            "\[RightAssociation]"}]}], "}"}]}]}], "\[RightAssociation]"}], ",", 
+      RowBox[{"\[LeftAssociation]", 
+       RowBox[{
+        RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"D\"\>"}], ",", 
+        RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+        RowBox[{"\<\"Offset\"\>", "\[Rule]", "16"}], ",", 
+        RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+        RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+       "\[RightAssociation]"}]}], "}"}]}], ",", 
+   RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\[LeftAssociation]", 
+       RowBox[{
+        RowBox[{"\<\"ClassName\"\>", "\[Rule]", "\<\"C\"\>"}], ",", 
+        RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"\[LeftAssociation]", 
+            RowBox[{
+             RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B1\"\>"}], ",", 
+             RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"NonVirtualBase\"\>"}], ",", 
+             RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"\[LeftAssociation]", 
+                 RowBox[{
+                  RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:A\"\>"}], ",", 
+                  RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"VbaseSlot\"\>"}], ",", 
+                  RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+                  RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"IsVirtualBase\"\>", "\[Rule]", "True"}], ",", 
+                  RowBox[{"\<\"VBaseOf\"\>", "\[Rule]", "\<\"A\"\>"}]}], 
+                 "\[RightAssociation]"}], ",", 
+                RowBox[{"\[LeftAssociation]", 
+                 RowBox[{
+                  RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B1\"\>"}], ",", 
+                  RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+                  RowBox[{"\<\"Offset\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+                  RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+                 "\[RightAssociation]"}]}], "}"}]}]}], 
+            "\[RightAssociation]"}], ",", 
+           RowBox[{"\[LeftAssociation]", 
+            RowBox[{
+             RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B2\"\>"}], ",", 
+             RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"NonVirtualBase\"\>"}], ",", 
+             RowBox[{"\<\"Offset\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+             RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"\[LeftAssociation]", 
+                 RowBox[{
+                  RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"vbase:A\"\>"}], ",", 
+                  RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"VbaseSlot\"\>"}], ",", 
+                  RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+                  RowBox[{"\<\"Size\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"Align\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"IsVirtualBase\"\>", "\[Rule]", "True"}], ",", 
+                  RowBox[{"\<\"VBaseOf\"\>", "\[Rule]", "\<\"A\"\>"}]}], 
+                 "\[RightAssociation]"}], ",", 
+                RowBox[{"\[LeftAssociation]", 
+                 RowBox[{
+                  RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"B2\"\>"}], ",", 
+                  RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+                  RowBox[{"\<\"Offset\"\>", "\[Rule]", "8"}], ",", 
+                  RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+                  RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+                 "\[RightAssociation]"}]}], "}"}]}]}], 
+            "\[RightAssociation]"}], ",", 
+           RowBox[{"\[LeftAssociation]", 
+            RowBox[{
+             RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"C\"\>"}], ",", 
+             RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+             RowBox[{"\<\"Offset\"\>", "\[Rule]", "16"}], ",", 
+             RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+             RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+            "\[RightAssociation]"}]}], "}"}]}], ",", 
+        RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "16"}], ",", 
+        RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
+        RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
+         RowBox[{"{", "}"}]}], ",", 
+        RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+         RowBox[{"{", 
+          RowBox[{"\[LeftAssociation]", 
+           RowBox[{
+            RowBox[{"\<\"ClassName\"\>", "\[Rule]", "\<\"A\"\>"}], ",", 
+            RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+             RowBox[{"{", 
+              RowBox[{"\[LeftAssociation]", 
+               RowBox[{
+                RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"A\"\>"}], ",", 
+                RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+                RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+                RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+                RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+               "\[RightAssociation]"}], "}"}]}], ",", 
+            RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "1"}], ",", 
+            RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "1"}], ",", 
+            RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
+             RowBox[{"{", "}"}]}], ",", 
+            RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+             RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}], "}"}]}]}], 
+       "\[RightAssociation]"}], ",", 
+      RowBox[{"\[LeftAssociation]", 
+       RowBox[{
+        RowBox[{"\<\"ClassName\"\>", "\[Rule]", "\<\"A\"\>"}], ",", 
+        RowBox[{"\<\"Layout\"\>", "\[Rule]", 
+         RowBox[{"{", 
+          RowBox[{"\[LeftAssociation]", 
+           RowBox[{
+            RowBox[{"\<\"Name\"\>", "\[Rule]", "\<\"A\"\>"}], ",", 
+            RowBox[{"\<\"Kind\"\>", "\[Rule]", "\<\"Class\"\>"}], ",", 
+            RowBox[{"\<\"Offset\"\>", "\[Rule]", "0"}], ",", 
+            RowBox[{"\<\"Size\"\>", "\[Rule]", "0"}], ",", 
+            RowBox[{"\<\"Align\"\>", "\[Rule]", "1"}]}], 
+           "\[RightAssociation]"}], "}"}]}], ",", 
+        RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "1"}], ",", 
+        RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "1"}], ",", 
+        RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
+         RowBox[{"{", "}"}]}], ",", 
+        RowBox[{"\<\"VirtualBases\"\>", "\[Rule]", 
+         RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}]}], "}"}]}], ",", 
+   RowBox[{"\<\"TotalSize\"\>", "\[Rule]", "16"}], ",", 
+   RowBox[{"\<\"MaxAlign\"\>", "\[Rule]", "8"}], ",", 
+   RowBox[{"\<\"VTableEntries\"\>", "\[Rule]", 
+    RowBox[{"{", "}"}]}]}], "\[RightAssociation]"}]], "Output",
  CellChangeTimes->{
-  3.959153432257084*^9},ExpressionUUID->"865abf89-9cce-4044-919b-\
-1048c4706cee"],
+  3.9604463332066746`*^9, 3.960446630764282*^9, {3.96045314040864*^9, 
+   3.960453149499605*^9}, 3.9604534264979553`*^9, 3.9604542909787273`*^9, 
+   3.960529004675131*^9, 3.9605480194742527`*^9, 3.9605480523322525`*^9, 
+   3.9606204367987385`*^9, 3.960620973065092*^9, 3.9606218315207615`*^9, 
+   3.9606232765847607`*^9, 3.96062607538669*^9, 3.9606269356399727`*^9, 
+   3.960627282621504*^9, 3.960627324271427*^9, 3.960636573426647*^9, 
+   3.9606373873518925`*^9, 3.960699871223757*^9, 3.960700075788721*^9, {
+   3.960702385715374*^9, 3.9607024092821083`*^9}, 3.9611346115527096`*^9, 
+   3.9611382182776356`*^9, 3.961138452545725*^9, 3.961147164946251*^9, 
+   3.961147203235777*^9, 3.961224249790394*^9, 3.9612249745789986`*^9, 
+   3.961301842808378*^9, 3.961302975060726*^9, 3.9613054197893467`*^9},
+ CellLabel->
+  "Out[142]=",ExpressionUUID->"37e71e8a-ff3d-8c43-a9ba-eddf0ec0ec35"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"DrawClassDiagram", "[", "layoutD", "]"}]], "Input",
+ CellChangeTimes->{{3.960276046514244*^9, 3.960276046519808*^9}, {
+  3.960446336283348*^9, 3.9604463612320824`*^9}},
+ CellLabel->
+  "In[143]:=",ExpressionUUID->"8c1bbb5f-805d-6b4b-9462-b576ab7449ec"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{440, 35}, {960, 50}]}, 
+     InsetBox["\<\"Virtual Base: C\"\>", {700, 23},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontColor -> 
+        RGBColor[0, 0, 1], FontWeight -> Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{440, 35}, {640, 50}]}, 
+      InsetBox["\<\"B1\"\>", NCache[{540, Rational[85, 2]}, {540, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{440, 35}, {520, 50}]}, 
+      InsetBox["\<\"vbase:A\"\>", NCache[{480, Rational[85, 2]}, {480, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{520, 35}, {640, 50}]}, 
+      InsetBox["\<\"B1\"\>", NCache[{580, Rational[85, 2]}, {580, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{640, 35}, {840, 50}]}, 
+      InsetBox["\<\"B2\"\>", NCache[{740, Rational[85, 2]}, {740, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{640, 35}, {720, 50}]}, 
+      InsetBox["\<\"vbase:A\"\>", NCache[{680, Rational[85, 2]}, {680, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{720, 35}, {840, 50}]}, 
+      InsetBox["\<\"B2\"\>", NCache[{780, Rational[85, 2]}, {780, 42.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{840, 35}, {960, 50}]}, 
+     InsetBox["\<\"C\"\>", NCache[{900, Rational[85, 2]}, {900, 42.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{970, 60}, {1090, 75}]}, 
+     InsetBox["\<\"Virtual Base: A\"\>", {1030, 48},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontColor -> 
+        RGBColor[0, 0, 1], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{970, 60}, {1090, 75}]}, 
+     InsetBox["\<\"A\"\>", NCache[{1030, Rational[135, 2]}, {1030, 67.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 10}, {410, 25}]}, InsetBox["\<\"Object: D\"\>", {210, 40},
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+      0.6, 0.6, 1]], RectangleBox[{10, 10}, {90, 25}]}, 
+     InsetBox["\<\"vbase:C\"\>", NCache[{50, Rational[35, 2]}, {50, 17.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+        Bold}]}, {{
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       1, 1, 0.9]], RectangleBox[{90, 10}, {290, 25}]}, 
+      InsetBox["\<\"B2\"\>", NCache[{190, Rational[35, 2]}, {190, 17.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[RGBColor[
+       0.6, 0.6, 1]], RectangleBox[{90, 10}, {170, 25}]}, 
+      InsetBox["\<\"vbase:A\"\>", NCache[{130, Rational[35, 2]}, {130, 17.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}, {
+      {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+       RectangleBox[{170, 10}, {290, 25}]}, 
+      InsetBox["\<\"B2\"\>", NCache[{230, Rational[35, 2]}, {230, 17.5}],
+       BaseStyle->{
+        FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+         Bold}]}}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[0.8]], 
+      RectangleBox[{290, 10}, {410, 25}]}, 
+     InsetBox["\<\"D\"\>", NCache[{350, Rational[35, 2]}, {350, 17.5}],
+      BaseStyle->{
+       FontFamily -> "Arial", FontSize -> Rational[640, 109], FontWeight -> 
+        Bold}]}}, {
+    {RGBColor[0, 0, 1], Thickness[0.0009174311926605505], 
+     Arrowheads[{0, 0.011009174311926606`}], 
+     ArrowBox[{{480, 50}, {480, 75}, {970, 75}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.0009174311926605505], 
+     Arrowheads[{0, 0.011009174311926606`}], 
+     ArrowBox[{{680, 50}, {680, 75}, {970, 75}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.0009174311926605505], 
+     Arrowheads[{0, 0.011009174311926606`}], 
+     ArrowBox[{{130, 25}, {130, 75}, {970, 75}}]}, 
+    {RGBColor[0, 0, 1], Thickness[0.0009174311926605505], 
+     Arrowheads[{0, 0.011009174311926606`}], 
+     ArrowBox[{{50, 25}, {50, 50}, {440, 50}}]}}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{1450, 800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Output",
+ CellChangeTimes->{3.9607024099376583`*^9, 3.961134611971388*^9, 
+  3.961138453085516*^9, 3.961147165281723*^9, 3.961147203307667*^9, 
+  3.9612242501712437`*^9, 3.961224975360733*^9, 3.9613018431946735`*^9, 
+  3.961305420113247*^9},
+ CellLabel->
+  "Out[143]=",ExpressionUUID->"efa81f05-55db-4a44-8df8-efee845d226c"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"ParseAndDrawClassLayout", "[", "]"}]], "Input",
+ CellChangeTimes->{{3.9602757559606266`*^9, 3.960275817885868*^9}, {
+  3.9602760417316723`*^9, 3.9602760472481747`*^9}, {3.9607033304548264`*^9, 
+  3.960703365657669*^9}, {3.9607078433995113`*^9, 3.960707844730171*^9}, {
+  3.960707907598404*^9, 3.96070793413937*^9}},
+ CellLabel->
+  "In[144]:=",ExpressionUUID->"847c4cca-3322-444a-81b7-8643695c5320"],
+
+Cell[BoxData["$Canceled"], "Output",
+ CellChangeTimes->{3.9607079502947674`*^9, 3.960707987860384*^9, 
+  3.961134615444744*^9, 3.961147165711733*^9, 3.9611472051370735`*^9, 
+  3.9612242524943447`*^9, 3.9613054224906006`*^9},
+ CellLabel->
+  "Out[144]=",ExpressionUUID->"4fd7382a-c751-6e48-9b3d-b5db97948a7c"]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.960275590503996*^9, 3.9602756488301315`*^9}},
+ CellLabel->"In[15]:=",ExpressionUUID->"9cf69ac4-1158-cf43-ada8-47737bdab69e"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.960275451469696*^9, 3.9602755586411495`*^9}},
+ CellLabel->
+  "In[130]:=",ExpressionUUID->"cb4b6eb1-89eb-3443-9f55-0287e3f0a3ff"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"classes", "=", 
+    RowBox[{
+    "ParseCppToClasses", "[", "\"\<previos_exam_examples/Q2_W23-24_B.hpp\>\"",
+      "]"}]}], ";"}], "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{
+  3.9591534312449303`*^9, {3.9607079982650833`*^9, 3.96070801123402*^9}, {
+   3.9607080752314186`*^9, 3.9607080777451115`*^9}},
+ CellLabel->"In[16]:=",ExpressionUUID->"2bdeb78a-af28-9443-a9b6-741402616244"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"layoutD1", " ", "=", " ", 
+   RowBox[{"ComputeClassLayout", "[", 
+    RowBox[{"classes", ",", "\"\<D1\>\""}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.9607080803322544`*^9, 3.9607081129765186`*^9}, {
+  3.9607081435955677`*^9, 3.9607081475183315`*^9}},
+ CellLabel->"In[17]:=",ExpressionUUID->"e6fdaa84-ff1b-d84e-b566-643eea44dfaa"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "ComputeClassLayout", "noClass", 
+   "\"Class \\!\\(\\*RowBox[{\\\"\\\\\\\"D1\\\\\\\"\\\"}]\\) not found in the \
+parsed classes.\"", 2, 17, 2, 32053333493785785061, "Local", 
+   "CppClassLayoutParser`ComputeClassLayout"},
+  "MessageTemplate2",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471673117523`*^9, 3.961147205280098*^9},
+ CellLabel->
+  "During evaluation of \
+In[17]:=",ExpressionUUID->"3d799500-79e4-0940-9e87-883b8a63f0fa"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"DrawClassDiagram", "[", "layoutD1", "]"}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{
+  3.959153431549532*^9, {3.9607081174537277`*^9, 3.9607081410247383`*^9}},
+ CellLabel->"In[18]:=",ExpressionUUID->"884abc6d-b931-2a43-ad50-1d27e1043a13"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "KeyExistsQ", "invrl", 
+   "\"The argument \\!\\(\\*RowBox[{\\\"\\\\\\\"VirtualBases\\\\\\\"\\\"}]\\) \
+is not a valid Association or a list of rules.\"", 2, 18, 3, 
+   32053333493785785061, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471678494205`*^9, 3.96114720537636*^9},
+ CellLabel->
+  "During evaluation of \
+In[18]:=",ExpressionUUID->"72c1cb6c-1826-4d4b-8ae9-1b69564b50ef"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "StringJoin", "string", 
+   "\"String expected at position \\!\\(\\*RowBox[{\\\"2\\\"}]\\) in \
+\\!\\(\\*RowBox[{\\\"\\\\\\\"Virtual Base: \\\\\\\"\\\", \\\"<>\\\", RowBox[{\
+\\\"\\\\\\\"VirtualBases\\\\\\\"\\\", \\\"[\\\", \
+\\\"\\\\\\\"ClassName\\\\\\\"\\\", \\\"]\\\"}]}]\\).\"", 2, 18, 4, 
+   32053333493785785061, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471678494205`*^9, 3.9611472054232388`*^9},
+ CellLabel->
+  "During evaluation of \
+In[18]:=",ExpressionUUID->"1a21ddd3-08a2-d646-bdc1-487e51bf86d4"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "StringJoin", "string", 
+   "\"String expected at position \\!\\(\\*RowBox[{\\\"2\\\"}]\\) in \
+\\!\\(\\*RowBox[{\\\"\\\\\\\"Object: \\\\\\\"\\\", \\\"<>\\\", \
+RowBox[{\\\"$Failed\\\", \\\"[\\\", \\\"\\\\\\\"ClassName\\\\\\\"\\\", \
+\\\"]\\\"}]}]\\).\"", 2, 18, 5, 32053333493785785061, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471678494205`*^9, 3.961147205433449*^9},
+ CellLabel->
+  "During evaluation of \
+In[18]:=",ExpressionUUID->"83d0ae9e-467a-784b-9e67-066b73c4c5bf"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "StringJoin", "string", 
+   "\"String expected at position \\!\\(\\*RowBox[{\\\"2\\\"}]\\) in \
+\\!\\(\\*RowBox[{\\\"\\\\\\\"VTable: \\\\\\\"\\\", \\\"<>\\\", \
+RowBox[{\\\"$Failed\\\", \\\"[\\\", \\\"\\\\\\\"ClassName\\\\\\\"\\\", \
+\\\"]\\\"}]}]\\).\"", 2, 18, 6, 32053333493785785061, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471678494205`*^9, 3.9611472054425583`*^9},
+ CellLabel->
+  "During evaluation of \
+In[18]:=",ExpressionUUID->"1adf2a51-83a3-174f-8510-ae1b48e4c568"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "General", "stop", 
+   "\"Further output of \\!\\(\\*StyleBox[RowBox[{\\\"StringJoin\\\", \
+\\\"::\\\", \\\"string\\\"}], \\\"MessageName\\\"]\\) will be suppressed \
+during this calculation.\"", 2, 18, 7, 32053333493785785061, "Local"},
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{3.9611471678494205`*^9, 3.961147205451065*^9},
+ CellLabel->
+  "During evaluation of \
+In[18]:=",ExpressionUUID->"7a1f372e-3a03-be46-a6c1-2e8b457f95d9"],
+
+Cell[BoxData[
+ GraphicsBox[{{{
+     {EdgeForm[{RGBColor[0, 0, 1], Thickness[0.0015], 
+      Dashing[{Small, Small}]}], FaceForm[None], 
+      RectangleBox[{
+       40 + Max[
+         DirectedInfinity[-1], 20 + 
+          Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+          Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+             "Layout"]]], 30 + Max[60, 3 "VirtualBases"[13]] + 
+          Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+          Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+             "Layout"]]]] - Min[
+        DirectedInfinity[1], 20 + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]], 30 + 
+         Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 57}, {
+       160 + Max[
+         DirectedInfinity[-1], 20 + 
+          Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+          Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+             "Layout"]]], 30 + Max[60, 3 "VirtualBases"[13]] + 
+          Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+          Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+             "Layout"]]]] - Min[
+        DirectedInfinity[1], 20 + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]], 30 + 
+         Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 72}]}, InsetBox[
+      RowBox[{"\<\"Virtual Base: \"\>", "<>", 
+       RowBox[{"\<\"VirtualBases\"\>", "(", "\<\"ClassName\"\>", ")"}]}], {
+      100 + Max[
+        DirectedInfinity[-1], 20 + 
+         Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]], 30 + Max[60, 3 "VirtualBases"[13]] + 
+         Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+         Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+            "Layout"]]]] - Min[
+       DirectedInfinity[1], 20 + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 30 + 
+        Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]]] + 
+       Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+          "Layout"]]], 45},
+      BaseStyle->{FontFamily -> "Arial", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontColor -> RGBColor[0, 0, 1], FontWeight -> 
+        Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[None], 
+      RectangleBox[{10, 32}, {
+       10 + Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 47}]}, InsetBox[
+      RowBox[{"\<\"Object: \"\>", "<>", 
+       RowBox[{"$Failed", "[", "\<\"ClassName\"\>", "]"}]}], {
+      10 + Rational[1, 2] 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 62},
+      BaseStyle->{FontFamily -> "Arial", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.0015]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{10, 32}, {110, 47}]}, InsetBox[
+      RowBox[{"\<\"Layout\"\>", "(", "\<\"Name\"\>", ")"}], 
+      NCache[{60, Rational[79, 2]}, {60, 39.5}],
+      BaseStyle->{FontFamily -> "Arial", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{
+       20 + Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 10}, {
+       20 + Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 22}]}, InsetBox[
+      RowBox[{"\<\"VTable: \"\>", "<>", 
+       RowBox[{"$Failed", "[", "\<\"ClassName\"\>", "]"}]}], {
+      20 + Rational[1, 2] Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+       Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+          "Layout"]]], 27},
+      BaseStyle->{FontFamily -> "Arial", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{
+       20 + Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 10}, {
+       20 + Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 22}]}, 
+     InsetBox["\<\"VTableEntries\"\>", {
+      20 + Rational[1, 2] Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+       Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+          "Layout"]]], 16},
+      BaseStyle->{FontFamily -> "Courier", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0], Thickness[0.002]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{
+       30 + Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], -12}, {
+       30 + Max[60, 3 "VirtualBases"[13]] + 
+        Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 0}]}, InsetBox[
+      RowBox[{"\<\"VTable: \"\>", "<>", 
+       RowBox[{"\<\"VirtualBases\"\>", "(", "\<\"ClassName\"\>", ")"}]}], {
+      30 + Rational[1, 2] Max[60, 3 "VirtualBases"[13]] + 
+       Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+       Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+          "Layout"]]], 5},
+      BaseStyle->{FontFamily -> "Arial", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}, {
+     {EdgeForm[{GrayLevel[0.8], Thickness[0.001]}], FaceForm[GrayLevel[1]], 
+      RectangleBox[{
+       30 + Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], -12}, {
+       30 + Max[60, 3 "VirtualBases"[13]] + 
+        Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+        Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+           "Layout"]]], 0}]}, 
+     InsetBox["\<\"VTableEntries\"\>", {
+      30 + Rational[1, 2] Max[60, 3 "VirtualBases"[13]] + 
+       Max[60, 3 $Failed[StringLength["VTableEntries"]]] + 
+       Total[$Failed[(CppClassLayoutParser`Private`getSlotWidth[#]& )[
+          "Layout"]]], -6},
+      BaseStyle->{FontFamily -> "Courier", FontSize -> 6400/Max[400, 40 + Max[
+            DirectedInfinity[-1], 20 + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+            30 + Max[60, 3 "VirtualBases"[13]] + Max[60, 3 $Failed[
+                StringLength["VTableEntries"]]] + Total[
+              $Failed[
+               (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] - 
+          Min[
+           DirectedInfinity[1], 20 + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]], 
+           30 + Max[60, 3 $Failed[
+               StringLength["VTableEntries"]]] + Total[
+             $Failed[
+              (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]]] + 
+          Total[
+            $Failed[
+             (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + 
+          Total[
+            $Failed[
+             (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+              If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+               Total[
+                Map[
+                CppClassLayoutParser`Private`getSlotWidth[#]& , 
+                 CppClassLayoutParser`Private`vbLayout]], 
+               CppClassLayoutParser`Private`classBlockWidth]]& )[
+             "VirtualBases"]]]], FontWeight -> Bold}]}}, {}},
+  Axes->False,
+  Background->GrayLevel[1],
+  Frame->False,
+  ImagePadding->10,
+  ImageSize->{400 + Total[
+      $Failed[
+       (CppClassLayoutParser`Private`getSlotWidth[#]& )["Layout"]]] + Total[
+      $Failed[
+       (Module[{CppClassLayoutParser`Private`vbLayout = #["Layout"]}, 
+        If[Length[CppClassLayoutParser`Private`vbLayout] > 0, 
+         Total[
+          Map[
+          CppClassLayoutParser`Private`getSlotWidth[#]& , 
+           CppClassLayoutParser`Private`vbLayout]], 
+         CppClassLayoutParser`Private`classBlockWidth]]& )["VirtualBases"]]], 
+    800},
+  PlotRange->All,
+  PlotRangePadding->Scaled[0.08]]], "Output",
+ CellChangeTimes->{3.960708136522049*^9, 3.961147167932667*^9, 
+  3.961147205465967*^9},
+ CellLabel->"Out[18]=",ExpressionUUID->"cc1b0807-60d4-114c-b472-7fa0f099fc51"]
+}, Open  ]],
+
+Cell[BoxData["\[IndentingNewLine]"], "Input",
+ CellChangeTimes->{3.959153432257084*^9},
+ CellLabel->
+  "In[134]:=",ExpressionUUID->"865abf89-9cce-4044-919b-1048c4706cee"],
 
 Cell[BoxData[
  RowBox[{"\[IndentingNewLine]", "\[IndentingNewLine]", "\[IndentingNewLine]", 
@@ -979,7 +1950,8 @@ Cell[BoxData[
  CellChangeTimes->{{3.958556747179289*^9, 3.958556753356634*^9}, {
   3.958712896820301*^9, 3.9587128994741497`*^9}, {3.959074751754673*^9, 
   3.9590747523909187`*^9}},
- CellLabel->"In[11]:=",ExpressionUUID->"d738da4a-dd88-9f42-a33d-b7ad7cc4f9b0"],
+ CellLabel->
+  "In[135]:=",ExpressionUUID->"d738da4a-dd88-9f42-a33d-b7ad7cc4f9b0"],
 
 Cell[BoxData[""], "Input",
  CellChangeTimes->{{3.9587129010315895`*^9, 3.958712902687948*^9}},
@@ -988,7 +1960,7 @@ Cell[BoxData[""], "Input",
 WindowSize->{1269, 641},
 WindowMargins->{{0, Automatic}, {Automatic, 0}},
 CellContext->Notebook,
-Magnification:>0.8 Inherited,
+Magnification:>0.9 Inherited,
 FrontEndVersion->"14.2 for Microsoft Windows (64-bit) (December 26, 2024)",
 StyleDefinitions->"Default.nb",
 ExpressionUUID->"cc017dbd-3c5a-d04f-af11-30a47627553b"
@@ -1004,43 +1976,64 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[554, 20, 1511, 23, 53, "Input",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
-Cell[2068, 45, 498, 11, 22, "Input",ExpressionUUID->"e1b829b0-e926-fb4a-924c-22c2bc3a67bc"],
+Cell[554, 20, 1538, 24, 59, "Input",ExpressionUUID->"d24e5665-08e8-8b41-9158-594b16a5287f"],
+Cell[2095, 46, 548, 11, 25, "Input",ExpressionUUID->"e1b829b0-e926-fb4a-924c-22c2bc3a67bc"],
 Cell[CellGroupData[{
-Cell[2591, 60, 961, 17, 68, "Input",ExpressionUUID->"36270ee0-d26c-5247-8759-53f4c119fba6"],
-Cell[3555, 79, 8718, 146, 71, "Output",ExpressionUUID->"39a7280f-decd-5b47-9d96-824377b67b16"]
+Cell[2668, 61, 961, 17, 76, "Input",ExpressionUUID->"36270ee0-d26c-5247-8759-53f4c119fba6"],
+Cell[3632, 80, 10650, 172, 97, "Output",ExpressionUUID->"f28aa5c4-1a46-1f4c-af8c-4dee3784579a"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[12310, 230, 426, 7, 22, "Input",ExpressionUUID->"643bc87c-4fea-f144-9ab6-44b161d5c732"],
-Cell[12739, 239, 7437, 125, 440, "Output",ExpressionUUID->"6689a6fe-a820-0e4c-b0f6-deb537f405b3"]
+Cell[14319, 257, 426, 7, 25, "Input",ExpressionUUID->"643bc87c-4fea-f144-9ab6-44b161d5c732"],
+Cell[14748, 266, 9524, 161, 735, "Output",ExpressionUUID->"45f4d5ac-2833-6149-bb66-32c32629d33f"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[20213, 369, 417, 8, 37, "Input",ExpressionUUID->"61e7fdc5-674f-2047-9069-82b8b392a842"],
-Cell[20633, 379, 4957, 95, 71, "Output",ExpressionUUID->"3fa74dc5-dee9-d142-b29b-4d6257fd8b7a"]
+Cell[24309, 432, 417, 8, 42, "Input",ExpressionUUID->"61e7fdc5-674f-2047-9069-82b8b392a842"],
+Cell[24729, 442, 6628, 118, 97, "Output",ExpressionUUID->"5658b738-4b4f-b74c-b424-976c45196c0f"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[25627, 479, 299, 6, 37, "Input",ExpressionUUID->"e8db006f-c151-6a42-abe4-9983a640570d"],
-Cell[25929, 487, 5712, 102, 493, "Output",ExpressionUUID->"b79e53cd-f4a2-3d4f-b7ce-454f79d522db"]
+Cell[31394, 565, 364, 6, 59, "Input",ExpressionUUID->"e8db006f-c151-6a42-abe4-9983a640570d"],
+Cell[31761, 573, 7335, 130, 735, "Output",ExpressionUUID->"e9d8c5d3-9e0a-fd43-bd79-aa5f10af3f4d"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[31678, 594, 458, 9, 37, "Input",ExpressionUUID->"bc1396e6-0073-624b-b127-861c4ccab63b"],
-Cell[32139, 605, 7586, 144, 117, "Output",ExpressionUUID->"496d7e2e-ce4e-334d-b2bd-42f58584c357"]
+Cell[39133, 708, 458, 9, 42, "Input",ExpressionUUID->"bc1396e6-0073-624b-b127-861c4ccab63b"],
+Cell[39594, 719, 9273, 168, 148, "Output",ExpressionUUID->"1736dfdb-b6c3-3644-9784-a11e8afcaca7"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[39762, 754, 316, 7, 37, "Input",ExpressionUUID->"28f7608e-5833-6b4f-aaae-0cde0699f655"],
-Cell[40081, 763, 8297, 155, 744, "Output",ExpressionUUID->"b89df911-e948-1f40-82f6-4a24e1644439"]
+Cell[48904, 892, 316, 7, 42, "Input",ExpressionUUID->"28f7608e-5833-6b4f-aaae-0cde0699f655"],
+Cell[49223, 901, 10383, 187, 755, "Output",ExpressionUUID->"423ba06e-4996-b04b-bafb-fca302b5265f"]
 }, Open  ]],
-Cell[48393, 921, 378, 9, 22, "Input",ExpressionUUID->"0d02adb0-44ba-4e46-ba4c-48e708b46aab"],
-Cell[48774, 932, 179, 3, 22, "Input",ExpressionUUID->"dbed4ddb-b4e2-ed4a-b30d-c8975444e2ab"],
-Cell[48956, 937, 152, 3, 22, "Input",ExpressionUUID->"8c1bbb5f-805d-6b4b-9462-b576ab7449ec"],
-Cell[49111, 942, 207, 4, 22, "Input",ExpressionUUID->"847c4cca-3322-444a-81b7-8643695c5320"],
-Cell[49321, 948, 154, 3, 22, "Input",ExpressionUUID->"9cf69ac4-1158-cf43-ada8-47737bdab69e"],
-Cell[49478, 953, 154, 3, 22, "Input",ExpressionUUID->"cb4b6eb1-89eb-3443-9f55-0287e3f0a3ff"],
-Cell[49635, 958, 172, 3, 37, "Input",ExpressionUUID->"2bdeb78a-af28-9443-a9b6-741402616244"],
-Cell[49810, 963, 170, 3, 37, "Input",ExpressionUUID->"884abc6d-b931-2a43-ad50-1d27e1043a13"],
-Cell[49983, 968, 147, 3, 37, "Input",ExpressionUUID->"865abf89-9cce-4044-919b-1048c4706cee"],
-Cell[50133, 973, 479, 8, 129, "Input",ExpressionUUID->"d738da4a-dd88-9f42-a33d-b7ad7cc4f9b0"],
-Cell[50615, 983, 172, 2, 22, "Input",ExpressionUUID->"75e94ebc-622f-8a4c-91be-38cd103c505d"]
+Cell[59621, 1091, 400, 9, 25, "Input",ExpressionUUID->"0d02adb0-44ba-4e46-ba4c-48e708b46aab"],
+Cell[CellGroupData[{
+Cell[60046, 1104, 353, 7, 25, "Input",ExpressionUUID->"dbed4ddb-b4e2-ed4a-b30d-c8975444e2ab"],
+Cell[60402, 1113, 10146, 190, 183, "Output",ExpressionUUID->"37e71e8a-ff3d-8c43-a9ba-eddf0ec0ec35"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[70585, 1308, 275, 5, 25, "Input",ExpressionUUID->"8c1bbb5f-805d-6b4b-9462-b576ab7449ec"],
+Cell[70863, 1315, 6255, 123, 735, "Output",ExpressionUUID->"efa81f05-55db-4a44-8df8-efee845d226c"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[77155, 1443, 422, 7, 25, "Input",ExpressionUUID->"847c4cca-3322-444a-81b7-8643695c5320"],
+Cell[77580, 1452, 307, 5, 28, "Output",ExpressionUUID->"4fd7382a-c751-6e48-9b3d-b5db97948a7c"]
+}, Open  ]],
+Cell[77902, 1460, 173, 2, 25, "Input",ExpressionUUID->"9cf69ac4-1158-cf43-ada8-47737bdab69e"],
+Cell[78078, 1464, 177, 3, 25, "Input",ExpressionUUID->"cb4b6eb1-89eb-3443-9f55-0287e3f0a3ff"],
+Cell[78258, 1469, 438, 10, 42, "Input",ExpressionUUID->"2bdeb78a-af28-9443-a9b6-741402616244"],
+Cell[CellGroupData[{
+Cell[78721, 1483, 372, 7, 25, "Input",ExpressionUUID->"e6fdaa84-ff1b-d84e-b566-643eea44dfaa"],
+Cell[79096, 1492, 479, 11, 23, "Message",ExpressionUUID->"3d799500-79e4-0940-9e87-883b8a63f0fa"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[79612, 1508, 289, 6, 42, "Input",ExpressionUUID->"884abc6d-b931-2a43-ad50-1d27e1043a13"],
+Cell[79904, 1516, 455, 11, 23, "Message",ExpressionUUID->"72c1cb6c-1826-4d4b-8ae9-1b69564b50ef"],
+Cell[80362, 1529, 586, 13, 23, "Message",ExpressionUUID->"1a21ddd3-08a2-d646-bdc1-487e51bf86d4"],
+Cell[80951, 1544, 553, 12, 23, "Message",ExpressionUUID->"83d0ae9e-467a-784b-9e67-066b73c4c5bf"],
+Cell[81507, 1558, 555, 12, 23, "Message",ExpressionUUID->"1adf2a51-83a3-174f-8510-ae1b48e4c568"],
+Cell[82065, 1572, 493, 11, 23, "Message",ExpressionUUID->"7a1f372e-3a03-be46-a6c1-2e8b457f95d9"],
+Cell[82561, 1585, 17344, 351, 28, "Output",ExpressionUUID->"cc1b0807-60d4-114c-b472-7fa0f099fc51"]
+}, Open  ]],
+Cell[99920, 1939, 170, 3, 42, "Input",ExpressionUUID->"865abf89-9cce-4044-919b-1048c4706cee"],
+Cell[100093, 1944, 483, 9, 145, "Input",ExpressionUUID->"d738da4a-dd88-9f42-a33d-b7ad7cc4f9b0"],
+Cell[100579, 1955, 172, 2, 25, "Input",ExpressionUUID->"75e94ebc-622f-8a4c-91be-38cd103c505d"]
 }
 ]
 *)
