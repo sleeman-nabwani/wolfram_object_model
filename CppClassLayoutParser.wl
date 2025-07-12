@@ -36,14 +36,134 @@ Begin["`Private`"];
 typeSize["char"]   := 1;
 typeSize["int"]    := 4;
 typeSize["double"] := 8;
-typeSize[_]        := 8;  (* Default to pointer size *)
+typeSize[_]        := 8; 
 typeAlign[t_]      := typeSize[t];
 
 (* --- Collect direct virtual bases only --- *)
 getDirectVirtBases[classes_, cls_] := Module[{bs},
   If[!KeyExistsQ[classes, cls], Return[{}]];
   bs = Lookup[classes[cls], "Bases", {}];
-  Cases[bs, {b_, True} :> b]  (* Only direct virtual bases *)
+  Cases[bs, {b_, True} :> b]
+];
+
+(* --- Build inheritance chain for proper function resolution --- *)
+buildInheritanceChain[classes_, derivedClass_, virtualBaseClass_] := Module[{
+  visited = {}, chain = {}, 
+  findChain
+},
+  (* Recursive function to find inheritance path *)
+  findChain[currentClass_] := Module[{bases, directBases, virtualBases, found = False},
+    (* Avoid infinite recursion *)
+    If[MemberQ[visited, currentClass], Return[False]];
+    AppendTo[visited, currentClass];
+    
+    (* Add current class to chain *)
+    AppendTo[chain, currentClass];
+    
+    (* If we reached the target virtual base, we found a path *)
+    If[currentClass === virtualBaseClass, Return[True]];
+    
+    (* Get bases of current class *)
+    If[KeyExistsQ[classes, currentClass],
+      bases = Lookup[classes[currentClass], "Bases", {}];
+      directBases = Cases[bases, {b_, False} :> b];
+      virtualBases = Cases[bases, {b_, True} :> b];
+      
+      (* Check virtual bases first *)
+      Do[
+        If[findChain[vb], found = True; Break[]];
+      , {vb, virtualBases}];
+      
+      (* If not found in virtual bases, check direct bases *)
+      If[!found,
+        Do[
+          If[findChain[db], found = True; Break[]];
+        , {db, directBases}];
+      ];
+    ];
+    
+    (* If path not found through this class, remove it from chain *)
+    If[!found, chain = Drop[chain, -1]];
+    
+    found
+  ];
+  
+  (* Find the inheritance chain *)
+  If[findChain[derivedClass], 
+    (* Return chain from derived to base (excluding the virtual base itself) *)
+    Take[chain, Length[chain] - 1],
+    {} (* No path found *)
+  ]
+];
+
+(* --- Build all inheritance chains for multiple inheritance scenarios --- *)
+buildAllInheritanceChains[classes_, derivedClass_, virtualBaseClass_] := Module[{
+  allChains = {},
+  findAllChains
+},
+  (* Recursive function to find all inheritance paths - NO GLOBAL VISITED ARRAY *)
+  findAllChains[currentClass_, currentChain_, localVisited_] := Module[{
+    bases, directBases, virtualBases, newVisited
+  },
+    (* Avoid infinite recursion in this specific path *)
+    If[MemberQ[localVisited, currentClass], Return[]];
+    newVisited = Append[localVisited, currentClass];
+    
+    (* If we reached the target virtual base, we found a complete path *)
+    If[currentClass === virtualBaseClass,
+      AppendTo[allChains, currentChain];
+      Return[];
+    ];
+    
+    (* Get bases of current class *)
+    If[KeyExistsQ[classes, currentClass],
+      bases = Lookup[classes[currentClass], "Bases", {}];
+      directBases = Cases[bases, {b_, False} :> b];
+      virtualBases = Cases[bases, {b_, True} :> b];
+      
+      (* Recursively explore all paths through virtual bases *)
+      Do[
+        findAllChains[vb, Append[currentChain, vb], newVisited];
+      , {vb, virtualBases}];
+      
+      (* Recursively explore all paths through direct bases *)
+      Do[
+        findAllChains[db, Append[currentChain, db], newVisited];
+      , {db, directBases}];
+    ];
+  ];
+  
+  (* Find all inheritance chains starting from derived class *)
+  findAllChains[derivedClass, {derivedClass}, {}];
+  
+  (* Return all chains, excluding the virtual base itself from each chain *)
+  Map[Take[#, Length[#] - 1] &, allChains]
+];
+
+(* --- Find the most derived class that overrides a function across all inheritance paths --- *)
+findMostDerivedOverrideInMultipleInheritance[classes_, allChains_, functionName_] := Module[{
+  bestOverride = None, bestDepth = Infinity
+},
+  (* Check each inheritance chain *)
+  Do[
+    Module[{chain = allChains[[i]]},
+      (* Traverse inheritance chain from most derived to least derived *)
+      Do[
+        Module[{currentClass = chain[[j]], classFunctions},
+          If[KeyExistsQ[classes, currentClass],
+            classFunctions = Lookup[classes[currentClass], "VTableEntries", {}];
+            (* If this class declares the function, check if it's more derived than current best *)
+            If[MemberQ[classFunctions, functionName] && j < bestDepth,
+              bestOverride = currentClass;
+              bestDepth = j;
+            ];
+          ];
+        ];
+      , {j, Length[chain]}];
+    ];
+  , {i, Length[allChains]}];
+  
+  bestOverride
 ];
 
 (* --- Parse C++ via clang AST dump --- *)
@@ -111,8 +231,10 @@ getVirtBases[classes_, cls_] := Module[{rec, bs, v, nv},
   rec = getVirtBases[classes, #]&;
   If[!KeyExistsQ[classes, cls], Return[{}]];
   bs = Lookup[classes[cls], "Bases", {}];
-  v  = Cases[bs, {b_, True} :> b];   (* Virtual bases *)
-  nv = Cases[bs, {b_, False} :> b];  (* Non-virtual bases *)
+  (* Virtual bases *)
+  v  = Cases[bs, {b_, True} :> b];
+  (* Non-virtual bases *)   
+  nv = Cases[bs, {b_, False} :> b];  
   DeleteDuplicates@Join[v, Flatten[rec /@ nv]]
 ];
 
@@ -131,35 +253,32 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   data = classes[cls];
   bases = data["Bases"];
   nv = Cases[bases, {b_, False} :> b];
-  directVirtBases = getDirectVirtBases[classes, cls];  (* Only direct virtual bases for vbase slots *)
-  allVirtBases = getVirtBases[classes, cls];            (* All virtual bases for panel display *)
+  (* direct virtual bases for vbase slots *)
+  directVirtBases = getDirectVirtBases[classes, cls];
+  (* All virtual bases *)  
+  allVirtBases = getVirtBases[classes, cls];            
   
-  (* ENHANCED: Helper function to resolve VTable entries with proper override semantics *)
+  (*Helper function to resolve VTable entries with proper override semantics *)
   resolveVTableEntries[targetClassName_String, baseClassName_String] := Module[{
-    baseClassFunctions, derivedClassFunctions, resolvedEntries = {}
+    baseClassFunctions, resolvedEntries = {}, inheritanceChain
   },
-    (* Get base class function names (without class prefix) *)
+    (* Get base class function names*)
     baseClassFunctions = If[classes =!= None && KeyExistsQ[classes, baseClassName],
       classes[baseClassName]["VTableEntries"],
       {}
     ];
     
-    (* Get main derived class function names for override checking *)
-    derivedClassFunctions = If[classes =!= None && KeyExistsQ[classes, targetClassName],
-      classes[targetClassName]["VTableEntries"],
-      {}
-    ];
+    (* Build inheritance chain from derived class to base class *)
+    inheritanceChain = buildInheritanceChain[classes, targetClassName, baseClassName];
     
     (* For each function in the base class *)
     Do[
       Module[{baseFunctionName = baseClassFunctions[[i]], finalFunction, bestOverride},
-        (* Start with the base class version *)
-        bestOverride = baseClassName;
+        (* Find the most derived class that actually overrides this function *)
+        bestOverride = findMostDerivedOverrideInMultipleInheritance[classes, buildAllInheritanceChains[classes, targetClassName, baseClassName], baseFunctionName];
         
-        (* Check if target derived class overrides this function *)
-        If[MemberQ[derivedClassFunctions, baseFunctionName],
-          bestOverride = targetClassName;
-        ];
+        (* If no override found in chain, use the base class's version *)
+        If[bestOverride === None, bestOverride = baseClassName];
         
         finalFunction = bestOverride <> "::" <> baseFunctionName;
         AppendTo[resolvedEntries, finalFunction];
@@ -180,7 +299,27 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   ];
   
   (* Build virtual function table with proper overriding *)
+  (* FIXED: Collect virtual base functions FIRST, then non-virtual bases *)
+  virtualBaseInherited = Flatten[rec[#]["VTableEntries"] & /@ allVirtBases];
   inherited = Flatten[rec[#]["VTableEntries"] & /@ nv];
+  inherited = Join[virtualBaseInherited, inherited];
+  (* Remove duplicates while preserving order - improved to handle function overrides *)
+  inherited = Module[{reversed, seen = {}, result = {}},
+    (* Reverse the list to process most derived first *)
+    reversed = Reverse[inherited];
+    (* Keep first occurrence of each function name (which is most derived due to reversal) *)
+    Do[
+      Module[{functionName = Last@StringSplit[entry, "::"]},
+        If[!MemberQ[seen, functionName],
+          AppendTo[seen, functionName];
+          AppendTo[result, entry];
+        ];
+      ];
+    , {entry, reversed}];
+    (* Reverse back to original order *)
+    Reverse[result]
+  ];
+  
   ownVT = (cls <> "::" <> #)& /@ data["VTableEntries"];
   
   (* Build final VTable order: derived functions first, then non-overridden inherited *)
@@ -217,7 +356,7 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
     Function[b,
         Module[{bl = rec[b], modifiedLayout, isPrimaryBase},
           baseIndex++;
-          isPrimaryBase = (baseIndex == 1);  (* Only first non-virtual base is primary *)
+          isPrimaryBase = (baseIndex == 1);  
           
           (* ENHANCED: Properly resolve VTable entries for base classes *)
           modifiedLayout = If[isPrimaryBase,
@@ -246,14 +385,45 @@ ComputeClassLayout[classes_Association, cls_String] := Module[
   
   (* Create virtual base layouts recursively for all virtual bases *)
   vbLayouts = Table[
-    Module[{vbLayout},
+    Module[{vbLayout, resolvedVTableEntries},
       vbLayout = ComputeClassLayout[classes, v];
+      
+      (* FIXED: Resolve VTable entries using proper inheritance chain traversal *)
+      resolvedVTableEntries = Module[{
+        baseVTableEntries, resolvedEntries = {}, inheritanceChain
+      },
+        (* Get virtual base's original function names (without class prefix) *)
+        baseVTableEntries = If[KeyExistsQ[classes, v],
+          classes[v]["VTableEntries"],
+          {}
+        ];
+        
+        (* Build inheritance chain from derived class to virtual base *)
+        inheritanceChain = buildInheritanceChain[classes, cls, v];
+        
+        (* For each function in the virtual base VTable *)
+        Do[
+          Module[{baseFunctionName = baseVTableEntries[[i]], finalFunction, bestOverride},
+            (* Find the most derived class that actually overrides this function *)
+            bestOverride = findMostDerivedOverrideInMultipleInheritance[classes, buildAllInheritanceChains[classes, cls, v], baseFunctionName];
+            
+            (* If no override found in chain, use the virtual base's version *)
+            If[bestOverride === None, bestOverride = v];
+            
+            finalFunction = bestOverride <> "::" <> baseFunctionName;
+            AppendTo[resolvedEntries, finalFunction];
+          ]
+        , {i, Length[baseVTableEntries]}];
+        
+        resolvedEntries
+      ];
+      
       <|
         "ClassName" -> v,
         "Layout" -> vbLayout["Layout"],
         "TotalSize" -> Max[vbLayout["TotalSize"], 1],
         "MaxAlign" -> vbLayout["MaxAlign"],
-        "VTableEntries" -> vbLayout["VTableEntries"],
+        "VTableEntries" -> resolvedVTableEntries,  (* Use resolved entries *)
         "VirtualBases" -> vbLayout["VirtualBases"]
       |>
     ],
@@ -307,9 +477,9 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     uniformBlockWidth = 100,
     Uscaled,
     
-    (* NEW: Multiple VTable system *)
-    vtableStructures = {},  (* List of {className, vtableEntries, position} *)
-    vtableAnchors = <||>,   (* Association: className -> {x, y} *)
+    (* Multiple VTable system *)
+    vtableStructures = {}, 
+    vtableAnchors = <||>,  
     
     (* Layout dimensions *)
     mainBarWidth, totalVTableWidth, totalVTableHeight, totalVbWidth,
@@ -318,8 +488,8 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     (* Graphics collections *)
     graphics = {}, arrows = {},
     
-    (* ENHANCED: Separate anchor system for multiple VTables *)
-    vptrAnchors = {},           (* List of {position, className} *)
+    (* Separate anchor system for multiple VTables *)
+    vptrAnchors = {},           
     vbaseAnchors = <||>, 
     virtualBaseAnchors = <||>,
     
@@ -329,20 +499,20 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     (* Dynamic scaling: set a max total width for main object and virtual base panels *)
     maxBarWidth, mainNumSlots,
     
-    (* --- DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) --- *)
+    (* DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) *)
     diagramRefSize, arrowThickness, arrowHeadSize, labelFontSize
   },
   
   (* SET UNIFORM BLOCK SIZE AT THE BEGINNING *)
   Uscaled = uniformBlockWidth;
-  
-  (* --- DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) --- *)
+    
+  (* DYNAMIC SCALING FOR ARROWS AND FONTS (AFTER FINAL DIMENSIONS) *)
   diagramRefSize = Max[totalWidth, totalHeight, 400];
   arrowThickness = 0.0025 * (400/diagramRefSize);
   arrowHeadSize = 0.03 * (400/diagramRefSize);
   labelFontSize = baseLabelFontSize * (400/diagramRefSize);
   
-  (* --- STRICT SLOT-TYPE-BASED SIZING (ABSOLUTE UNIFORMITY) --- *)
+  (* STRICT SLOT-TYPE-BASED SIZING (ABSOLUTE UNIFORMITY) *)
   vptrWidth = 60;
   vbaseWidth = 80;
   fieldWidth = 80;
@@ -365,11 +535,11 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
   mainNumSlots = Max[1, Length[main]];
   mainBarWidth = Total[getSlotWidth[#] & /@ main];
   
-  (* INITIAL: Set placeholder VTable dimensions - will be updated after collection *)
+  (* Set placeholder VTable dimensions - will be updated after collection *)
   totalVTableWidth = 0;
   totalVTableHeight = If[vtables === {}, 0, Length[vtables] * vH];
   
-  (* ENHANCED: Calculate virtual base width using dynamic slot widths *)
+  (* Calculate virtual base width using dynamic slot widths *)
   totalVbWidth = If[vbs === {}, 0, 
     Total[Module[{vbLayout = #["Layout"]}, 
       If[Length[vbLayout] > 0, 
@@ -379,15 +549,15 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     ] & /@ vbs] + If[Length[vbs] > 1, (Length[vbs] - 1)*gap, 0]
   ];
   
-  (* FIXED: Proper positioning - virtual bases at top, main in middle, VTables at bottom *)
+  (* Proper positioning - virtual bases at top, main in middle, VTables at bottom *)
   vtableY = gap;  (* VTables at bottom (lowest Y) *)
   mainY = vtableY + If[vtables === {}, 0, totalVTableHeight + gap];  (* Main bar above VTables *)
   vbY = mainY + H + gap;  (* Virtual bases at top (highest Y) *)
   
-  (* FIXED: VTable positioned to the right of main content area *)
+  (* VTable positioned to the right of main content area *)
   vtableStartX = gap + mainBarWidth + gap;
   
-  (* PLACEHOLDER: Calculate total dimensions - will be updated after VTable collection *)
+  (* Calculate total dimensions - will be updated after VTable collection *)
   totalWidth = gap + mainBarWidth + gap + totalVTableWidth + gap + totalVbWidth + gap;
   totalHeight = gap + If[vbs === {}, 0, H + gap] + If[vtables === {}, 0, totalVTableHeight + gap] + H + gap;
   
@@ -401,7 +571,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     True, White
   ];
   
-  (* FIXED: Draw uniform block but show internal structure for subobjects, with correct width *)
+  (* Draw uniform block but show internal structure for subobjects, with correct width *)
   drawSlot[item_, x_, y_, width_:Automatic] := Module[
     {color = getColor[item["Kind"]], label, nestedGraphics = {}, actualWidth},
     
@@ -474,7 +644,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     , {i, Length[main]}]
   ];
   
-  (* ENHANCED: Draw multiple VTables *)
+  (* Draw multiple VTables *)
   drawVTables[] := Module[{},
     If[Length[vtableStructures] == 0, Return[]];
     
@@ -514,22 +684,22 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     , {i, Length[vtableStructures]}];
   ];
   
-  (* ENHANCED: Collect VTable structures for ALL base classes with virtual functions *)
+  (* Collect VTable structures for ALL base classes with virtual functions *)
   collectVTableStructures[] := Module[{
     allBases = {},           (* List of all base classes with their VTable info *)
     shouldMerge = False,     (* Whether to merge first base VTable *)
     firstNonVirtualBase = None,
     currentY = vtableY,
-    currentX = vtableStartX, (* FIXED: Use currentX for horizontal positioning *)
+    currentX = vtableStartX, 
     
-    (* ENHANCED: Complete function overriding logic *)
+    (* Complete function overriding logic *)
     resolveVTableEntries,
     
-    (* ENHANCED: Extract class info from layout when classes parameter is None *)
+    (* Extract class info from layout when classes parameter is None *)
     extractedClasses = If[classes === None, <||>, classes]
   },
     
-    (* SIMPLIFIED: Direct VTable extraction when classes is None *)
+    (* Direct VTable extraction when classes is None *)
     If[classes === None,
       (* Simple mode: extract VTables directly from layout *)
       
@@ -593,20 +763,20 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         , {i, Length[main]}];
       ];
       
-    , (* COMPLEX MODE: Use resolveVTableEntries function when classes is provided *)
+    , (* Use resolveVTableEntries function when classes is provided *)
       
       (* Helper function to resolve which functions are actually called *)
       resolveVTableEntries[className_String] := Module[{
         classVTableEntries, inheritedEntries, finalEntries
       },
-        (* Original logic when classes parameter is provided *)
+        (* Original logic when classes is provided *)
         (* Get this class's virtual functions *)
         classVTableEntries = If[extractedClasses =!= None && KeyExistsQ[extractedClasses, className],
           (className <> "::" <> #)& /@ extractedClasses[className]["VTableEntries"],
           {}
         ];
         
-        (* ENHANCED: Complete function overriding logic *)
+        (* Complete function overriding logic *)
         If[className === mainClassName,
           (* For the main class, return its own VTable entries *)
           classVTableEntries,
@@ -641,7 +811,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
                   bestOverride = mainClassName;
                 ];
                 
-                (* FUTURE: Could add logic to check intermediate classes in inheritance chain *)
+                (* Could add logic to check intermediate classes in inheritance chain *)
                 (* For now, check direct inheritance path: base -> main *)
                 
                 finalFunction = bestOverride <> "::" <> baseFunctionName;
@@ -654,7 +824,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         ]
       ];
       
-      (* 1. COLLECT ALL CLASSES WITH VIRTUAL FUNCTIONS *)
+      (* Collect ALL CLASSES WITH VIRTUAL FUNCTIONS *)
       
       (* Add main class if it has virtual functions *)
       If[Length[vtables] > 0,
@@ -662,7 +832,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
           "ClassName" -> mainClassName,
           "VTableEntries" -> vtables,
           "IsVirtual" -> False,
-          "IsPrimary" -> True  (* FIXED: Main class is always primary *)
+          "IsPrimary" -> True  (* Main class is always primary *)
         |>];
       ];
       
@@ -681,7 +851,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         ]
       , {i, Length[vbs]}];
       
-      (* ENHANCED: Extract VTable info from layout structure when classes not available *)
+      (* Extract VTable info from layout structure when classes not available *)
       Module[{baseIndex = 0, primaryBaseName = None},
         (* Identify all non-virtual bases from main layout *)
         Do[
@@ -692,7 +862,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
                 (* Track primary base name *)
                 If[isPrimary, primaryBaseName = baseClassName];
                 
-                (* ENHANCED: Add secondary bases (not primary) that have vptrs *)
+                (* Add secondary bases (not primary) that have vptrs *)
                 If[!isPrimary && KeyExistsQ[item, "Layout"],
                   Module[{baseLayout = item["Layout"], hasVptr = False, extractedVTableEntries = {}},
                     (* Check if this base has a vptr and extract VTable entries *)
@@ -727,12 +897,12 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
       ];
     ];
     
-    (* 2. DETERMINE MERGE LOGIC - Always separate for correct C++ behavior *)
+    (* Determine MERGE LOGIC - Always separate for correct C++ behavior *)
     shouldMerge = False;
     
-    (* 3. CREATE VTABLES FOR COLLECTED CLASSES *)
+    (* Create VTABLES FOR COLLECTED CLASSES *)
     If[separateVTables && !shouldMerge,
-      (* SEPARATE MODE: Individual VTables for classes that need them *)
+      (* Individual VTables for classes that need them *)
       
       (* Create VTable for each class with cascading Y positioning *)
       Do[
@@ -741,7 +911,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
           vtableWidth = Max[60, Max[StringLength /@ vtableEntries] * 3];
           vtableHeight = Length[vtableEntries] * vH;
           
-          (* CASCADING Y CALCULATION: prev_y - prev_vtable_height - gap *)
+          (* Cascading Y calculation: prev_y - prev_vtable_height - gap *)
           If[Length[vtableStructures] > 0,
             Module[{prevVTable = vtableStructures[[-1]]},
               newY = prevVTable["Position"][[2]] - prevVTable["Height"] - gap;
@@ -760,7 +930,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         ]
       , {i, Length[allBases]}];
       
-    , (* MERGED MODE: Single VTable with merged entries *)
+    , (* Single VTable with merged entries *)
       
       If[Length[vtables] > 0,
         Module[{vtableHeight = Length[vtables] * vH},
@@ -781,7 +951,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     ];
   ];
   
-  (* ENHANCED: Helper function to recursively collect all virtual bases *)
+  (* Helper function to recursively collect all virtual bases *)
   flattenAllVirtualBases[vbsList_] := Module[{allVbs = {}, processed = {}},
     (* Recursive function to collect virtual bases *)
     Module[{collectVBs},
@@ -810,7 +980,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     vbStructures = {},  (* Track VB positions and heights for cascade *)
     allVirtualBases    (* Flattened list of all virtual bases *)
   },
-    (* FIXED: Get all virtual bases recursively *)
+    (* Get all virtual bases recursively *)
     allVirtualBases = flattenAllVirtualBases[vbs];
     
     Do[
@@ -818,7 +988,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         (* Safely extract layout *)
         vbLayout = If[AssociationQ[vb] && KeyExistsQ[vb, "Layout"], vb["Layout"], {}];
         
-        (* FIXED: Use slot-type-based width for virtual bases based on content *)
+        (* Use slot-type-based width for virtual bases based on content *)
         vbBarWidth = If[Length[vbLayout] > 0, 
           Total[getSlotWidth[#] & /@ vbLayout], 
           classBlockWidth
@@ -826,7 +996,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
         vbHeight = H;  (* Virtual base height (single row) *)
         vbX = gap + mainBarWidth + gap + totalVTableWidth + gap + x;
         
-        (* UPWARD CASCADING Y CALCULATION: prev_y + prev_height + gap *)
+        (* Upward cascading Y calculation: prev_y + prev_height + gap *)
         If[Length[vbStructures] > 0,
           Module[{prevVb = vbStructures[[-1]]},
             newVbY = prevVb["Position"][[2]] + prevVb["Height"] + gap;
@@ -873,9 +1043,9 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     , {i, Length[allVirtualBases]}]
   ];
   
-  (* ENHANCED: Draw connection arrows for multiple VTables *)
+  (* Draw connection arrows for multiple VTables *)
   drawArrows[] := Module[{},
-    (* 1) ENHANCED: Black L-shaped arrows from vptr to corresponding VTable *)
+    (* Black L-shaped arrows from vptr to corresponding VTable *)
     If[Length[vptrAnchors] > 0,
       Do[
         Module[{anchorData = vptrAnchors[[i]], src, targetClass, tgt, adjustedSrc, adjustedTgt, midPt, 
@@ -894,7 +1064,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
             vtableHeight = vtableStruct["Height"];
             vtablePos = vtableStruct["Position"];
             
-            (* CORRECTED INTELLIGENT ARROW POSITIONING: upper left if src_x > tgt_x, upper right otherwise *)
+            (* Corrected arrow positioning: upper left if src_x > tgt_x, upper right otherwise *)
             adjustedSrc = {src[[1]], src[[2]] - H/2};  (* Top of vptr slot *)
             adjustedTgt = If[src[[1]] > vtablePos[[1]], 
               {vtablePos[[1]] + vtableWidth, vtablePos[[2]] + vtableHeight},   (* Upper right corner *)
@@ -912,7 +1082,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
       ];
     ];
     
-    (* 2) ENHANCED: Blue L-shaped arrows from vbase slots to virtual bases *)
+    (* Blue L-shaped arrows from vbase slots to virtual bases *)
     KeyValueMap[
       Function[{className, vbaseSrcs},
         If[KeyExistsQ[virtualBaseAnchors, className],
@@ -925,7 +1095,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
               Module[{src, adjustedSrc, adjustedTgt, midPt},
                 src = vbaseSrcs[[i]];
                 
-                (* CORRECTED INTELLIGENT ARROW POSITIONING WITH LEFT OFFSET: shifted left by vbWidth *)
+                (* Corrected arrow positioning with left offset: shifted left by vbWidth *)
                 adjustedSrc = {src[[1]], src[[2]]};  (* Bottom of vbase slot *)
                 adjustedTgt = If[src[[1]] > leftEdge, 
                   {leftEdge - vbWidth, tgt[[2]] + H},              (* Upper left corner shifted left by vbWidth *)
@@ -947,7 +1117,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
     ];
   ];
   
-  (* UPDATE: Calculate actual dimensions including cascaded virtual bases AND all VTables *)
+  (* Calculate actual dimensions including cascaded virtual bases AND all VTables *)
   updateDimensions[] := Module[{actualVTableWidth = 0, maxVbY = vbY, maxVTableY = 0, localMinVTableY = 0, calculatedTotalWidth},
     (* Calculate actual total width of all VTables *)
     If[Length[vtableStructures] > 0,
@@ -964,7 +1134,7 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
       ];
     ];
     
-    (* FIXED: Calculate Y range of all VTables for proper plot range *)
+    (* Calculate Y range of all VTables for proper plot range *)
     If[Length[vtableStructures] > 0,
       Do[
         Module[{vtableStruct = vtableStructures[[i]], pos, vtableHeight},
@@ -996,10 +1166,10 @@ DrawClassDiagram[layout_, opts:OptionsPattern[], classes_Association:None] := Mo
       ];
     ];
     
-    (* CRITICAL FIX: Calculate total width properly *)
+    (* Calculate total width properly *)
     calculatedTotalWidth = gap + mainBarWidth + gap + actualVTableWidth + gap + totalVbWidth + gap;
     
-    (* Update outer scope variables - CRITICAL FIX *)
+    (* Update outer scope variables *)
     minVTableY = localMinVTableY;
     totalVTableWidth = actualVTableWidth;
     totalWidth = calculatedTotalWidth;
